@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.mcp-infra-lens/
+*.log
+*.tsbuildinfo
+*.tgz
+*.sha256
+*.cdx.json
+sbom-*.json
+review-thread-summary.json
+.env
+doppler.yaml
+.mcpregistry_registry_token
+.mcpregistry_github_token

@@ -1,0 +1,15 @@
+node_modules
+dist
+coverage
+.git
+.github
+.azure
+.agent
+.mcp-infra-lens
+*.log
+*.tgz
+.env
+.env.*
+doppler.yaml
+sbom-*.json
+review-thread-summary.json

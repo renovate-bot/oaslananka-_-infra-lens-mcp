@@ -1,0 +1,57 @@
+version: '3'
+
+tasks:
+  format:
+    cmds:
+      - pnpm run format
+
+  lint:
+    cmds:
+      - pnpm run lint
+
+  typecheck:
+    cmds:
+      - pnpm run typecheck
+
+  test:
+    cmds:
+      - pnpm test
+
+  test:integration:
+    cmds:
+      - pnpm run test:integration
+
+  security:
+    cmds:
+      - pnpm run security
+
+  build:
+    cmds:
+      - pnpm run build
+
+  check:metadata:
+    env:
+      CHECK_METADATA_REQUIRE_DIST: 'true'
+    cmds:
+      - pnpm run check:metadata
+
+  package:dry-run:
+    cmds:
+      - pnpm run package:dry-run
+
+  release:dry-run:
+    cmds:
+      - pnpm run release:dry-run
+
+  ci:
+    cmds:
+      - pnpm run format:check
+      - pnpm run lint
+      - pnpm run typecheck
+      - pnpm test
+      - pnpm run test:integration
+      - pnpm run security
+      - pnpm run build
+      - task: check:metadata
+      - pnpm run package:dry-run
+      - pnpm run release:dry-run
