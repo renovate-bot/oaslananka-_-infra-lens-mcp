@@ -88,7 +88,11 @@ const httpServer = createServer((request, response) => {
         return;
       }
 
-      const authDecision = authorizeHttpRequest(request.headers.authorization, httpConfig);
+      const authDecision = authorizeHttpRequest(
+        request.headers.authorization,
+        httpConfig,
+        request.headers
+      );
       if (!authDecision.ok) {
         sendJsonError(
           response,

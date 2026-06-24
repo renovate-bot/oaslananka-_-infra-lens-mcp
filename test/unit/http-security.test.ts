@@ -197,6 +197,53 @@ describe('HTTP security configuration', () => {
     expect(authorizeHttpRequest('Bearer expected-token', config)).toEqual({ ok: true });
   });
 
+  it('requires explicit gateway configuration for OAuth gateway mode', () => {
+    expect(() =>
+      validateHttpConfiguration(
+        parseHttpConfig({
+          MCP_HTTP_AUTH_MODE: 'oauth-gateway'
+        })
+      )
+    ).toThrow(/MCP_HTTP_AUTHORIZATION_SERVERS/);
+
+    expect(() =>
+      validateHttpConfiguration(
+        parseHttpConfig({
+          MCP_HTTP_AUTH_MODE: 'oauth-gateway',
+          MCP_HTTP_AUTHORIZATION_SERVERS: 'https://auth.example.com',
+          MCP_HTTP_RESOURCE_URL: 'http://mcp.example.com',
+          MCP_HTTP_OAUTH_GATEWAY_SECRET: 'shared-secret'
+        })
+      )
+    ).toThrow(/HTTPS MCP_HTTP_RESOURCE_URL/);
+  });
+
+  it('accepts only authenticated requests from the configured OAuth gateway', () => {
+    const config = parseHttpConfig({
+      MCP_HTTP_AUTH_MODE: 'oauth-gateway',
+      MCP_HTTP_AUTHORIZATION_SERVERS: 'https://auth.example.com',
+      MCP_HTTP_RESOURCE_URL: 'https://mcp.example.com',
+      MCP_HTTP_OAUTH_GATEWAY_SECRET: 'shared-secret'
+    });
+
+    expect(() => validateHttpConfiguration(config)).not.toThrow();
+    expect(authorizeHttpRequest(undefined, config, {})).toMatchObject({
+      ok: false,
+      statusCode: 401,
+      message: 'OAuth gateway authentication is required.'
+    });
+    expect(
+      authorizeHttpRequest(undefined, config, { 'x-infra-lens-gateway-auth': 'wrong-secret' })
+    ).toMatchObject({
+      ok: false,
+      statusCode: 403,
+      message: 'OAuth gateway authentication is invalid.'
+    });
+    expect(
+      authorizeHttpRequest(undefined, config, { 'x-infra-lens-gateway-auth': 'shared-secret' })
+    ).toEqual({ ok: true });
+  });
+
   it('rejects oversized JSON bodies before parsing', async () => {
     const request = Readable.from([Buffer.from('{"payload":"too large"}')]);
 

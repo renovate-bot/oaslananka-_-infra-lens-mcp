@@ -85,8 +85,10 @@ node dist/mcp.js
 | `MCP_HTTP_ENDPOINT_PATH` | `/mcp` | Canonical Streamable HTTP MCP endpoint path |
 | `MCP_HTTP_ALLOWED_ORIGINS` | unset | Comma-separated allowed Origin values |
 | `MCP_HTTP_ALLOWED_HOSTS` | unset | Comma-separated allowed Host values |
-| `MCP_HTTP_AUTH_MODE` | `none` | `none`, `bearer`, or `oauth` |
+| `MCP_HTTP_AUTH_MODE` | `none` | `none`, `bearer`, or `oauth-gateway`; `oauth` is accepted as a compatibility alias |
 | `MCP_HTTP_BEARER_TOKEN` | unset | Local/dev bearer fallback token |
+| `MCP_HTTP_OAUTH_GATEWAY_HEADER` | `x-infra-lens-gateway-auth` | Header injected by a trusted OAuth gateway |
+| `MCP_HTTP_OAUTH_GATEWAY_SECRET` | unset | Shared backend secret required for `oauth-gateway` mode |
 | `MCP_HTTP_BODY_LIMIT_BYTES` | `1048576` | Maximum JSON request body size |
 | `MCP_HTTP_AUTHORIZATION_SERVERS` | unset | OAuth authorization server metadata URLs |
 | `MCP_PROFILE` | `full` | `full`, `remote-safe`, `chatgpt`, or `claude` |
@@ -119,11 +121,11 @@ MCP_TRANSPORT=http MCP_HTTP_HOST=127.0.0.1 MCP_HTTP_PORT=3000 node dist/server-h
 Loopback HTTP can run without auth for local development. Any non-loopback bind, such as `0.0.0.0`, fails fast unless all of these are configured:
 
 - `MCP_PROFILE=remote-safe`, `chatgpt`, or `claude`
-- `MCP_HTTP_AUTH_MODE=bearer` or `oauth`
+- `MCP_HTTP_AUTH_MODE=bearer` or `oauth-gateway`
 - `MCP_HTTP_ALLOWED_ORIGINS`
 - `MCP_HTTP_ALLOWED_HOSTS`
 
-OAuth validation is not implemented inside this package. Public deployments should place the server behind a production OAuth-aware gateway or reverse proxy. Connector publication readiness is therefore marked false in `mcp.json`.
+Native OAuth/JWT validation is not implemented inside this package. Public deployments should use `MCP_HTTP_AUTH_MODE=oauth-gateway` behind a production OAuth-aware gateway or reverse proxy, configure HTTPS `MCP_HTTP_RESOURCE_URL`, and block direct access to the Node process. See [ADR 0006](./docs/adr/0006-oauth-gateway-strategy.md). Connector publication readiness remains false until a full connector deployment is verified.
 
 ## Docker
 

@@ -1,6 +1,6 @@
 import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http';
 
-type HttpAuthMode = 'none' | 'bearer' | 'oauth';
+type HttpAuthMode = 'none' | 'bearer' | 'oauth-gateway';
 type HttpProfile = 'full' | 'remote-safe' | 'chatgpt' | 'claude';
 
 export interface HttpConfig {
@@ -11,6 +11,8 @@ export interface HttpConfig {
   allowedHosts: string[];
   authMode: HttpAuthMode;
   bearerToken?: string;
+  gatewayHeader: string;
+  gatewaySecret?: string;
   bodyLimitBytes: number;
   authorizationServers: string[];
   resourceUrl?: string;
@@ -54,7 +56,15 @@ function normalizeEndpointPath(value: string | undefined): string {
 }
 
 function parseAuthMode(value: string | undefined): HttpAuthMode {
-  return value === 'bearer' || value === 'oauth' ? value : 'none';
+  if (value === 'bearer') {
+    return 'bearer';
+  }
+
+  if (value === 'oauth-gateway' || value === 'oauth') {
+    return 'oauth-gateway';
+  }
+
+  return 'none';
 }
 
 function parseProfile(value: string | undefined): HttpProfile {
@@ -70,6 +80,8 @@ export function parseHttpConfig(env: Record<string, string | undefined>): HttpCo
     allowedHosts: parseCsv(env.MCP_HTTP_ALLOWED_HOSTS),
     authMode: parseAuthMode(env.MCP_HTTP_AUTH_MODE),
     bearerToken: env.MCP_HTTP_BEARER_TOKEN,
+    gatewayHeader: (env.MCP_HTTP_OAUTH_GATEWAY_HEADER ?? 'x-infra-lens-gateway-auth').toLowerCase(),
+    gatewaySecret: env.MCP_HTTP_OAUTH_GATEWAY_SECRET,
     bodyLimitBytes: parseInteger(env.MCP_HTTP_BODY_LIMIT_BYTES, DEFAULT_BODY_LIMIT_BYTES),
     authorizationServers: parseCsv(env.MCP_HTTP_AUTHORIZATION_SERVERS),
     resourceUrl: env.MCP_HTTP_RESOURCE_URL,
@@ -90,8 +102,18 @@ export function validateHttpConfiguration(config: HttpConfig): void {
     throw new Error('MCP_HTTP_AUTH_MODE=bearer requires MCP_HTTP_BEARER_TOKEN.');
   }
 
-  if (config.authMode === 'oauth' && config.authorizationServers.length === 0) {
-    throw new Error('MCP_HTTP_AUTH_MODE=oauth requires MCP_HTTP_AUTHORIZATION_SERVERS.');
+  if (config.authMode === 'oauth-gateway') {
+    if (config.authorizationServers.length === 0) {
+      throw new Error('MCP_HTTP_AUTH_MODE=oauth-gateway requires MCP_HTTP_AUTHORIZATION_SERVERS.');
+    }
+
+    if (!config.resourceUrl || !config.resourceUrl.startsWith('https://')) {
+      throw new Error('MCP_HTTP_AUTH_MODE=oauth-gateway requires an HTTPS MCP_HTTP_RESOURCE_URL.');
+    }
+
+    if (!config.gatewaySecret) {
+      throw new Error('MCP_HTTP_AUTH_MODE=oauth-gateway requires MCP_HTTP_OAUTH_GATEWAY_SECRET.');
+    }
   }
 
   if (isLoopbackHost(config.host)) {
@@ -103,7 +125,7 @@ export function validateHttpConfiguration(config: HttpConfig): void {
   }
 
   if (config.authMode === 'none') {
-    throw new Error('Non-loopback HTTP requires MCP_HTTP_AUTH_MODE=bearer or oauth.');
+    throw new Error('Non-loopback HTTP requires MCP_HTTP_AUTH_MODE=bearer or oauth-gateway.');
   }
 
   if (config.allowedOrigins.length === 0) {
@@ -170,22 +192,23 @@ function wwwAuthenticateHeader(config: HttpConfig): string {
 
 export function authorizeHttpRequest(
   authorization: string | undefined,
-  config: HttpConfig
+  config: HttpConfig,
+  headers: IncomingHttpHeaders = {}
 ): HttpDecision {
   if (config.authMode === 'none') {
     return { ok: true };
   }
 
-  if (!authorization) {
-    return {
-      ok: false,
-      statusCode: 401,
-      message: 'Authentication is required.',
-      headers: { 'WWW-Authenticate': wwwAuthenticateHeader(config) }
-    };
-  }
-
   if (config.authMode === 'bearer') {
+    if (!authorization) {
+      return {
+        ok: false,
+        statusCode: 401,
+        message: 'Authentication is required.',
+        headers: { 'WWW-Authenticate': wwwAuthenticateHeader(config) }
+      };
+    }
+
     const expected = `Bearer ${config.bearerToken}`;
     return authorization === expected
       ? { ok: true }
@@ -197,12 +220,24 @@ export function authorizeHttpRequest(
         };
   }
 
-  return {
-    ok: false,
-    statusCode: 501,
-    message: 'OAuth validation is not implemented by this server.',
-    headers: { 'WWW-Authenticate': wwwAuthenticateHeader(config) }
-  };
+  const gatewayValue = firstHeader(headers, config.gatewayHeader);
+  if (!gatewayValue) {
+    return {
+      ok: false,
+      statusCode: 401,
+      message: 'OAuth gateway authentication is required.',
+      headers: { 'WWW-Authenticate': wwwAuthenticateHeader(config) }
+    };
+  }
+
+  return gatewayValue === config.gatewaySecret
+    ? { ok: true }
+    : {
+        ok: false,
+        statusCode: 403,
+        message: 'OAuth gateway authentication is invalid.',
+        headers: { 'WWW-Authenticate': wwwAuthenticateHeader(config) }
+      };
 }
 
 function headerIncludes(headers: IncomingHttpHeaders, name: string, expected: string): boolean {
@@ -292,7 +327,8 @@ export function createProtectedResourceMetadata(config: HttpConfig): Record<stri
     resource: config.resourceUrl ?? `http://${config.host}:${config.port}`,
     authorization_servers: config.authorizationServers,
     bearer_methods_supported: ['header'],
-    scopes_supported: ['mcp:read']
+    scopes_supported: ['mcp:read'],
+    oauth_strategy: 'external_gateway'
   };
 }
 

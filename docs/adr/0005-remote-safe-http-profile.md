@@ -18,7 +18,7 @@ Require a remote-safe runtime profile for non-loopback HTTP deployments. `remote
 - Positive: Raw SSH credentials remain limited to trusted local contexts.
 - Positive: The same MCP tools can be exposed through HTTP without changing handler behavior.
 - Negative: Remote deployments need more environment configuration than local stdio.
-- Follow-up: Public OAuth validation remains outside the package until a production-ready token validation path is implemented.
+- Follow-up resolved by ADR 0006: production OAuth is gateway-only for this package unless a future ADR replaces that decision.
 
 ## Alternatives Considered
 

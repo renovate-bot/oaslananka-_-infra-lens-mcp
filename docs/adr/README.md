@@ -13,3 +13,5 @@ This directory records accepted technical decisions that shape `infra-lens-mcp`.
 | [0005](./0005-remote-safe-http-profile.md) | Accepted | Require remote-safe profiles for non-loopback HTTP deployments |
 
 Use [template.md](./template.md) for new records.
+
+- [0006: OAuth Gateway Strategy](./0006-oauth-gateway-strategy.md)
