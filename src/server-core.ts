@@ -5,11 +5,16 @@ import { analyzeSnapshot } from './analyzer.js';
 import { getBaseline, getHistory, saveSnapshot } from './baseline.js';
 import { collectSampledSnapshot, collectSnapshot } from './collector.js';
 import {
+  AnalyzeOutputSchema,
   AnalyzeSchema,
+  BaselineOutputSchema,
   BaselineSchema,
+  CompareOutputSchema,
   CompareSchema,
+  GetHistoryOutputSchema,
   GetHistorySchema,
   SafeConnectionSchema,
+  SnapshotOutputSchema,
   SnapshotSchema,
   type AnalyzeInput,
   type BaselineInput,
@@ -22,6 +27,7 @@ import {
 /** Content returned from an MCP tool handler. */
 export type ToolContent = {
   content: Array<{ type: 'text'; text: string }>;
+  structuredContent?: Record<string, unknown>;
 };
 
 /** Async handler invoked for a registered MCP tool. */
@@ -32,6 +38,7 @@ export type ToolConfig = {
   title: string;
   description: string;
   inputSchema: AnySchema;
+  outputSchema: AnySchema;
   annotations: {
     readOnlyHint: boolean;
     destructiveHint: boolean;
@@ -81,14 +88,15 @@ const defaultDependencies: ToolDependencies = {
   saveSnapshot
 };
 
-function textResult(payload: unknown): ToolContent {
+function structuredResult<T extends Record<string, unknown>>(payload: T): ToolContent {
   return {
     content: [
       {
         type: 'text',
         text: JSON.stringify(payload, null, 2)
       }
-    ]
+    ],
+    structuredContent: payload
   };
 }
 
@@ -150,6 +158,7 @@ export function createToolDefinitions(
         title: 'Analyze Server',
         description: 'Collect metrics from a server and explain any anomalies in human language',
         inputSchema: schemas.analyze,
+        outputSchema: AnalyzeOutputSchema,
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
       },
       handler: async (input) => {
@@ -166,7 +175,7 @@ export function createToolDefinitions(
         );
         dependencies.saveSnapshot(snapshot);
         const analysis = dependencies.analyzeSnapshot(snapshot);
-        return textResult({
+        return structuredResult({
           host: snapshot.host,
           timestamp: new Date(snapshot.timestamp).toISOString(),
           collection_window_minutes: input.duration_minutes,
@@ -189,12 +198,13 @@ export function createToolDefinitions(
         title: 'Take Metric Snapshot',
         description: 'Collect and save current server metrics without analysis',
         inputSchema: schemas.snapshot,
+        outputSchema: SnapshotOutputSchema,
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
       },
       handler: async (input) => {
         const snapshot = await dependencies.collectSnapshot(input.connection);
         dependencies.saveSnapshot(snapshot);
-        return textResult({
+        return structuredResult({
           saved: true,
           host: snapshot.host,
           timestamp: snapshot.timestamp
@@ -208,6 +218,7 @@ export function createToolDefinitions(
         description:
           'Record current metrics as baseline during normal operation for more accurate anomaly detection later',
         inputSchema: schemas.baseline,
+        outputSchema: BaselineOutputSchema,
         annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true }
       },
       handler: async (input) => {
@@ -217,7 +228,7 @@ export function createToolDefinitions(
         const sampleCount = baseline?.sample_count ?? 1;
         const samplesRemaining = Math.max(0, 10 - sampleCount);
 
-        return textResult({
+        return structuredResult({
           saved: true,
           host: snapshot.host,
           label: input.label,
@@ -236,13 +247,14 @@ export function createToolDefinitions(
         description:
           'Compare current server state to a recorded baseline and explain the differences',
         inputSchema: schemas.compare,
+        outputSchema: CompareOutputSchema,
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
       },
       handler: async (input) => {
         const snapshot = await dependencies.collectSnapshot(input.connection);
         const baseline = dependencies.getBaseline(snapshot.host, input.baseline_label);
         const analysis = dependencies.analyzeSnapshot(snapshot, input.baseline_label);
-        return textResult({
+        return structuredResult({
           host: snapshot.host,
           baseline_label: input.baseline_label,
           baseline_samples: baseline?.sample_count ?? 0,
@@ -258,11 +270,12 @@ export function createToolDefinitions(
         title: 'Get Metric History',
         description: 'Get historical CPU, memory, or load values for a server',
         inputSchema: GetHistorySchema,
+        outputSchema: GetHistoryOutputSchema,
         annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: false }
       },
       handler: async (input) => {
         const history = buildHistory(input, dependencies);
-        return textResult({
+        return structuredResult({
           host: input.host,
           metric: input.metric,
           hours: input.hours,

@@ -32,6 +32,8 @@ See the [MCP 2025-11-25 compliance matrix](./docs/compliance/mcp-2025-11-25.md) 
 | `compare_to_baseline` | Compare current state with a named baseline |
 | `get_history` | Return CPU, memory, or load history from SQLite |
 
+All tools return both readable JSON text and MCP `structuredContent` validated by declared `outputSchema` definitions, so clients and agents can consume responses without parsing the text block.
+
 ## Requirements
 
 - Node.js 24 LTS for CI, Docker, and release workflows

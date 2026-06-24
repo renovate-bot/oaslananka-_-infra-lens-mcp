@@ -8,7 +8,7 @@
 
 > **ToolConfig** = `object`
 
-Defined in: [server-core.ts:31](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L31)
+Defined in: [server-core.ts:37](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L37)
 
 MCP tool registration metadata and input schema.
 
@@ -18,7 +18,7 @@ MCP tool registration metadata and input schema.
 
 > **title**: `string`
 
-Defined in: [server-core.ts:32](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L32)
+Defined in: [server-core.ts:38](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L38)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [server-core.ts:32](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **description**: `string`
 
-Defined in: [server-core.ts:33](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L33)
+Defined in: [server-core.ts:39](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L39)
 
 ***
 
@@ -34,7 +34,15 @@ Defined in: [server-core.ts:33](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **inputSchema**: `AnySchema`
 
-Defined in: [server-core.ts:34](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L34)
+Defined in: [server-core.ts:40](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L40)
+
+***
+
+### outputSchema
+
+> **outputSchema**: `AnySchema`
+
+Defined in: [server-core.ts:41](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L41)
 
 ***
 
@@ -42,7 +50,7 @@ Defined in: [server-core.ts:34](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **annotations**: `object`
 
-Defined in: [server-core.ts:35](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L35)
+Defined in: [server-core.ts:42](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L42)
 
 #### readOnlyHint
 

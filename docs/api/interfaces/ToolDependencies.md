@@ -6,7 +6,7 @@
 
 # Interface: ToolDependencies
 
-Defined in: [server-core.ts:62](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L62)
+Defined in: [server-core.ts:69](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L69)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [server-core.ts:62](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **analyzeSnapshot**: (`snapshot`, `baselineLabel`, `thresholds`) => `object`
 
-Defined in: [server-core.ts:63](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L63)
+Defined in: [server-core.ts:70](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L70)
 
 #### Parameters
 
@@ -52,7 +52,7 @@ Defined in: [server-core.ts:63](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **collectSampledSnapshot**: (`connection`, `durationMinutes`, `intervalSeconds`, `runner`, `options`) => `Promise`\<[`MetricSnapshot`](MetricSnapshot.md)\>
 
-Defined in: [server-core.ts:64](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L64)
+Defined in: [server-core.ts:71](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L71)
 
 #### Parameters
 
@@ -116,7 +116,7 @@ Defined in: [server-core.ts:64](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **collectSnapshot**: (`connection`, `runner`, `options`) => `Promise`\<[`MetricSnapshot`](MetricSnapshot.md)\>
 
-Defined in: [server-core.ts:65](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L65)
+Defined in: [server-core.ts:72](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L72)
 
 #### Parameters
 
@@ -172,7 +172,7 @@ Defined in: [server-core.ts:65](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **getBaseline**: (`host`, `label`) => \{ `cpu_samples`: `number`[]; `memory_mean`: `number`; `load_mean`: `number`; `sample_count`: `number`; \} \| `null`
 
-Defined in: [server-core.ts:66](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L66)
+Defined in: [server-core.ts:73](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L73)
 
 #### Parameters
 
@@ -194,7 +194,7 @@ Defined in: [server-core.ts:66](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **getHistory**: (`host`, `_metric`, `hours`, `label?`) => [`StoredSnapshotRow`](StoredSnapshotRow.md)[]
 
-Defined in: [server-core.ts:67](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L67)
+Defined in: [server-core.ts:74](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L74)
 
 #### Parameters
 
@@ -224,7 +224,7 @@ Defined in: [server-core.ts:67](https://github.com/oaslananka/infra-lens-mcp/blo
 
 > **saveSnapshot**: (`snapshot`, `label`) => `void`
 
-Defined in: [server-core.ts:68](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L68)
+Defined in: [server-core.ts:75](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L75)
 
 #### Parameters
 

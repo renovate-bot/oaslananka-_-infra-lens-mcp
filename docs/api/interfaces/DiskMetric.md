@@ -6,7 +6,7 @@
 
 # Interface: DiskMetric
 
-Defined in: [types.ts:113](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L113)
+Defined in: [types.ts:216](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L216)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:113](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **filesystem**: `string`
 
-Defined in: [types.ts:114](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L114)
+Defined in: [types.ts:217](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L217)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:114](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **mount**: `string`
 
-Defined in: [types.ts:115](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L115)
+Defined in: [types.ts:218](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L218)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:115](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **total\_gb**: `number`
 
-Defined in: [types.ts:116](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L116)
+Defined in: [types.ts:219](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L219)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [types.ts:116](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **used\_gb**: `number`
 
-Defined in: [types.ts:117](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L117)
+Defined in: [types.ts:220](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L220)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [types.ts:117](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **usage\_percent**: `number`
 
-Defined in: [types.ts:118](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L118)
+Defined in: [types.ts:221](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L221)

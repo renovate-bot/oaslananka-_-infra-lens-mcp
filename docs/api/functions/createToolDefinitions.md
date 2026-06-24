@@ -8,7 +8,7 @@
 
 > **createToolDefinitions**(`dependencies?`, `options?`): [`ToolDefinitionTuple`](../type-aliases/ToolDefinitionTuple.md)
 
-Defined in: [server-core.ts:139](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L139)
+Defined in: [server-core.ts:147](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L147)
 
 ## Parameters
 

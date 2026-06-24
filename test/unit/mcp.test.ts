@@ -215,6 +215,70 @@ describe('registerInfraLensTools', () => {
     expect(loadPayload.history?.[0]?.value).toBe(0.5);
   });
 
+  it('returns structured content matching each declared output schema', async () => {
+    const definitions = createToolDefinitions({
+      analyzeSnapshot: jest.fn(() => ({
+        anomalies: [],
+        summary: 'healthy',
+        health_score: 100
+      })),
+      collectSampledSnapshot: jest.fn(async () => baseSnapshot),
+      collectSnapshot: jest.fn(async () => baseSnapshot),
+      getBaseline: jest.fn(() => ({
+        cpu_samples: [20, 21, 19],
+        memory_mean: 25,
+        load_mean: 0.7,
+        sample_count: 3
+      })),
+      getHistory: jest.fn(() => [
+        {
+          timestamp: 1,
+          cpu_percent: 10,
+          memory_percent: 20,
+          load_1: 0.5,
+          raw_json: '{}'
+        }
+      ]),
+      saveSnapshot: jest.fn(() => undefined)
+    });
+
+    const analyzeResult = await definitions[0].handler({
+      connection: { host: 'app-01.internal', port: 22, username: 'ops' },
+      duration_minutes: 1,
+      include_processes: true,
+      include_network: true
+    } satisfies AnalyzeInput);
+    const snapshotResult = await definitions[1].handler({
+      connection: { host: 'app-01.internal', port: 22, username: 'ops' }
+    } satisfies SnapshotInput);
+    const baselineResult = await definitions[2].handler({
+      connection: { host: 'app-01.internal', port: 22, username: 'ops' },
+      label: 'weekday-normal'
+    } satisfies BaselineInput);
+    const compareResult = await definitions[3].handler({
+      connection: { host: 'app-01.internal', port: 22, username: 'ops' },
+      baseline_label: 'weekday-normal'
+    } satisfies CompareInput);
+    const historyResult = await definitions[4].handler({
+      host: 'app-01.internal',
+      metric: 'cpu',
+      hours: 24,
+      label: 'weekday-normal'
+    } satisfies GetHistoryInput);
+
+    const results = [analyzeResult, snapshotResult, baselineResult, compareResult, historyResult];
+
+    definitions.forEach((definition, index) => {
+      const result = results[index]!;
+      const jsonTextPayload = JSON.parse(result.content[0]?.text ?? '{}') as unknown;
+      expect(definition.config.outputSchema).toBeDefined();
+      expect(result.structuredContent).toEqual(jsonTextPayload);
+      expect(() => {
+        (definition.config.outputSchema as z.ZodType<unknown>).parse(result.structuredContent);
+      }).not.toThrow();
+    });
+  });
+
   it('registers wrappers on an MCP server compatible registrar', async () => {
     const handlerSpy = jest.fn(() => ({
       anomalies: [],

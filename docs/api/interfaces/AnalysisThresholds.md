@@ -6,7 +6,7 @@
 
 # Interface: AnalysisThresholds
 
-Defined in: [types.ts:89](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L89)
+Defined in: [types.ts:192](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L192)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:89](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **cpu\_warn\_percent**: `number`
 
-Defined in: [types.ts:90](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L90)
+Defined in: [types.ts:193](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L193)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:90](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **cpu\_critical\_percent**: `number`
 
-Defined in: [types.ts:91](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L91)
+Defined in: [types.ts:194](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L194)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:91](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **memory\_warn\_percent**: `number`
 
-Defined in: [types.ts:92](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L92)
+Defined in: [types.ts:195](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L195)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [types.ts:92](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **memory\_critical\_percent**: `number`
 
-Defined in: [types.ts:93](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L93)
+Defined in: [types.ts:196](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L196)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [types.ts:93](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **disk\_warn\_percent**: `number`
 
-Defined in: [types.ts:94](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L94)
+Defined in: [types.ts:197](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L197)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [types.ts:94](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **disk\_critical\_percent**: `number`
 
-Defined in: [types.ts:95](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L95)
+Defined in: [types.ts:198](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L198)
 
 ***
 
@@ -62,7 +62,7 @@ Defined in: [types.ts:95](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **load\_warn\_ratio**: `number`
 
-Defined in: [types.ts:96](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L96)
+Defined in: [types.ts:199](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L199)
 
 ***
 
@@ -70,7 +70,7 @@ Defined in: [types.ts:96](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **load\_critical\_ratio**: `number`
 
-Defined in: [types.ts:97](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L97)
+Defined in: [types.ts:200](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L200)
 
 ***
 
@@ -78,4 +78,4 @@ Defined in: [types.ts:97](https://github.com/oaslananka/infra-lens-mcp/blob/main
 
 > **zscore\_threshold**: `number`
 
-Defined in: [types.ts:98](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L98)
+Defined in: [types.ts:201](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L201)

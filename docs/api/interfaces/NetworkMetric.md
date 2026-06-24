@@ -6,7 +6,7 @@
 
 # Interface: NetworkMetric
 
-Defined in: [types.ts:121](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L121)
+Defined in: [types.ts:224](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L224)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:121](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **interface**: `string`
 
-Defined in: [types.ts:122](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L122)
+Defined in: [types.ts:225](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L225)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:122](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **rx\_bytes**: `number`
 
-Defined in: [types.ts:123](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L123)
+Defined in: [types.ts:226](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L226)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [types.ts:123](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **tx\_bytes**: `number`
 
-Defined in: [types.ts:124](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L124)
+Defined in: [types.ts:227](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L227)

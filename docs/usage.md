@@ -34,6 +34,12 @@ For `remote-safe`, `chatgpt`, and `claude` profiles, raw `password`, `privateKey
 
 `include_processes=false` skips process collection. `include_network=false` skips network collection. These flags prevent collection at the SSH command layer, not just response rendering.
 
+## Tool outputs
+
+Every tool returns a backward-compatible JSON text block and the same payload as MCP `structuredContent`. Each tool also declares an `outputSchema`, allowing MCP clients to validate and consume machine-readable fields directly.
+
+For example, `analyze_server` exposes typed fields such as `host`, `timestamp`, `collection_window_minutes`, `health_score`, `summary`, `anomalies`, and `metrics`. `get_history` exposes `data_points` and a `history` array of `{ timestamp, value }` points for charting or follow-up reasoning.
+
 ## Record a baseline
 
 ```json

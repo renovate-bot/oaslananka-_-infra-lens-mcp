@@ -8,4 +8,4 @@
 
 > **BaselineInput** = `z.infer`\<*typeof* [`BaselineSchema`](../variables/BaselineSchema.md)\>
 
-Defined in: [types.ts:77](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L77)
+Defined in: [types.ts:180](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L180)

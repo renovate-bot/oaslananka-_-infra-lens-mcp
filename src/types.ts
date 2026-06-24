@@ -71,6 +71,109 @@ export const GetHistorySchema = z.object({
     .describe('Optional snapshot label filter to isolate baseline sessions or named collections')
 });
 
+export const DiskMetricSchema = z.object({
+  filesystem: z.string(),
+  mount: z.string(),
+  total_gb: z.number(),
+  used_gb: z.number(),
+  usage_percent: z.number()
+});
+
+export const NetworkMetricSchema = z.object({
+  interface: z.string(),
+  rx_bytes: z.number(),
+  tx_bytes: z.number()
+});
+
+export const ProcessMetricSchema = z.object({
+  pid: z.number().int(),
+  name: z.string(),
+  cpu_percent: z.number(),
+  mem_percent: z.number(),
+  command: z.string()
+});
+
+export const CpuMetricSchema = z.object({
+  usage_percent: z.number(),
+  load_1: z.number(),
+  load_5: z.number(),
+  load_15: z.number(),
+  core_count: z.number().int()
+});
+
+export const MemoryMetricSchema = z.object({
+  total_mb: z.number(),
+  used_mb: z.number(),
+  free_mb: z.number(),
+  usage_percent: z.number(),
+  swap_used_mb: z.number(),
+  swap_total_mb: z.number()
+});
+
+export const AnomalySchema = z.object({
+  metric: z.string(),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  value: z.number(),
+  baseline_mean: z.number(),
+  z_score: z.number().optional(),
+  normalized_load_per_core: z.number().optional(),
+  explanation: z.string(),
+  recommendation: z.string()
+});
+
+export const AnalyzeOutputSchema = z.object({
+  host: z.string(),
+  timestamp: z.string(),
+  collection_window_minutes: z.number().int().min(1),
+  health_score: z.number().min(0).max(100),
+  summary: z.string(),
+  anomalies: z.array(AnomalySchema),
+  metrics: z.object({
+    cpu: CpuMetricSchema,
+    memory: MemoryMetricSchema,
+    disk: z.array(DiskMetricSchema),
+    top_processes: z.array(ProcessMetricSchema),
+    network: z.array(NetworkMetricSchema)
+  })
+});
+
+export const SnapshotOutputSchema = z.object({
+  saved: z.boolean(),
+  host: z.string(),
+  timestamp: z.number().int()
+});
+
+export const BaselineOutputSchema = z.object({
+  saved: z.boolean(),
+  host: z.string(),
+  label: z.string(),
+  sample_count: z.number().int().min(1),
+  message: z.string()
+});
+
+export const CompareOutputSchema = z.object({
+  host: z.string(),
+  baseline_label: z.string(),
+  baseline_samples: z.number().int().min(0),
+  health_score: z.number().min(0).max(100),
+  summary: z.string(),
+  anomalies: z.array(AnomalySchema)
+});
+
+export const HistoryPointSchema = z.object({
+  timestamp: z.number().int(),
+  value: z.number()
+});
+
+export const GetHistoryOutputSchema = z.object({
+  host: z.string(),
+  metric: MetricNameSchema,
+  hours: z.number().int().min(1).max(168),
+  label: z.string().nullable(),
+  data_points: z.number().int().min(0),
+  history: z.array(HistoryPointSchema)
+});
+
 export type ConnectionInput = z.infer<typeof ConnectionSchema>;
 export type AnalyzeInput = z.infer<typeof AnalyzeSchema>;
 export type SnapshotInput = z.infer<typeof SnapshotSchema>;
