@@ -93,6 +93,49 @@ describe('HTTP security configuration', () => {
     ).toMatchObject({ ok: false, statusCode: 415 });
   });
 
+  it('rejects client session identifiers because HTTP mode is stateless', () => {
+    const decision = validateMcpHttpRequest(
+      {
+        method: 'POST',
+        url: '/mcp',
+        headers: {
+          accept: 'application/json, text/event-stream',
+          'content-type': 'application/json',
+          'mcp-session-id': 'session-should-not-leak'
+        }
+      },
+      parseHttpConfig({})
+    );
+
+    expect(decision).toMatchObject({
+      ok: false,
+      statusCode: 400,
+      message: 'MCP-Session-Id is not supported by the stateless HTTP transport.'
+    });
+    expect(decision.message).not.toContain('session-should-not-leak');
+  });
+
+  it('accepts current and backward-compatible MCP protocol versions', () => {
+    const config = parseHttpConfig({});
+
+    for (const version of ['2025-11-25', '2025-06-18', '2025-03-26']) {
+      expect(
+        validateMcpHttpRequest(
+          {
+            method: 'POST',
+            url: '/mcp?transport=streamable',
+            headers: {
+              accept: 'application/json, text/event-stream',
+              'content-type': 'application/json; charset=utf-8',
+              'mcp-protocol-version': version
+            }
+          },
+          config
+        )
+      ).toEqual({ ok: true });
+    }
+  });
+
   it('rejects unsupported MCP protocol versions', () => {
     expect(
       validateMcpHttpRequest(

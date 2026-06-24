@@ -13,7 +13,10 @@ const REDACTED_KEYS = new Set([
   'client_secret',
   'api_key',
   'apikey',
-  'authorization'
+  'authorization',
+  'mcp-session-id',
+  'session_id',
+  'sessionid'
 ]);
 
 const SECRET_ASSIGNMENT_PATTERN =

@@ -114,7 +114,7 @@ Process command arguments are not collected by the default process command. Secr
 
 ## HTTP Transport
 
-Run the Streamable HTTP transport locally. The canonical MCP endpoint is `http://127.0.0.1:3000/mcp` unless `MCP_HTTP_ENDPOINT_PATH` is changed.
+Run the Streamable HTTP transport locally. The canonical MCP endpoint is `http://127.0.0.1:3000/mcp` unless `MCP_HTTP_ENDPOINT_PATH` is changed. HTTP mode is stateless today: the server does not issue or accept `MCP-Session-Id`, and only POST JSON-RPC calls are supported on the MCP endpoint.
 
 ```bash
 MCP_TRANSPORT=http MCP_HTTP_HOST=127.0.0.1 MCP_HTTP_PORT=3000 node dist/server-http.js

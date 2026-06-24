@@ -14,12 +14,16 @@ Keep stdio as the default transport and keep Streamable HTTP as an explicit alte
 
 HTTP deployments must pass through `src/http-security.ts` policy checks before tool handling. Non-loopback HTTP binds are not routine local development; they require an auth mode, allowed origins, allowed hosts, and a remote-safe runtime profile.
 
+The HTTP transport is intentionally **stateless** today. `StreamableHTTPServerTransport` runs with `sessionIdGenerator: undefined`, the server does not issue `MCP-Session-Id`, and client-supplied `MCP-Session-Id` headers are rejected before body parsing. This avoids accidental state retention, session identifier logging, and cleanup ambiguity until streaming/session lifecycle support becomes an explicit product goal.
+
 ## Consequences
 
 - Positive: Desktop clients get the simplest and safest default path through stdio.
 - Positive: HTTP deployments reuse the same tool implementation instead of drifting into a second product surface.
 - Positive: Transport-specific security policy stays isolated around the HTTP entry point.
+- Positive: Stateless HTTP avoids server-side session cleanup and makes identifier handling explicit.
 - Negative: HTTP remains intentionally conservative and needs gateway support for production OAuth validation.
+- Negative: GET/SSE streaming and DELETE session termination are not available until stateful HTTP becomes product scope.
 - Follow-up: Public connector readiness stays false until production OAuth token validation is implemented or delegated in a documented deployment profile.
 
 ## Alternatives Considered

@@ -35,7 +35,8 @@ describe('createLogger', () => {
       nested: {
         privateKey: 'private-key'
       },
-      items: [{ passphrase: 'hidden' }]
+      items: [{ passphrase: 'hidden' }],
+      'mcp-session-id': 'session-should-not-leak'
     });
 
     const payload = JSON.parse(String(stderrSpy.mock.calls[0]?.[0] ?? '{}')) as {
@@ -43,12 +44,14 @@ describe('createLogger', () => {
         password?: string;
         nested?: { privateKey?: string };
         items?: Array<{ passphrase?: string }>;
+        'mcp-session-id'?: string;
       };
     };
 
     expect(payload.context?.password).toBe('[REDACTED]');
     expect(payload.context?.nested?.privateKey).toBe('[REDACTED]');
     expect(payload.context?.items?.[0]?.passphrase).toBe('[REDACTED]');
+    expect(payload.context?.['mcp-session-id']).toBe('[REDACTED]');
 
     stderrSpy.mockRestore();
   });

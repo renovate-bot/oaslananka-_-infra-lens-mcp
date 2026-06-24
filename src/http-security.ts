@@ -271,6 +271,15 @@ export function validateMcpHttpRequest(
     return { ok: false, statusCode: 404, message: 'MCP endpoint was not found.' };
   }
 
+  const sessionId = firstHeader(request.headers, 'mcp-session-id');
+  if (sessionId) {
+    return {
+      ok: false,
+      statusCode: 400,
+      message: 'MCP-Session-Id is not supported by the stateless HTTP transport.'
+    };
+  }
+
   const method = request.method ?? 'GET';
   if (method === 'GET') {
     return {
