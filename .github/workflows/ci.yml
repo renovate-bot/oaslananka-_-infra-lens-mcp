@@ -204,19 +204,5 @@ jobs:
           docker version
           docker compose version
 
-      - name: Start SSH fixture
-        run: docker compose -f docker-compose.test.yml up --detach --build
-
-      - name: Show SSH fixture status
-        run: docker compose -f docker-compose.test.yml ps
-
       - name: Run SSH e2e tests
         run: pnpm run test:e2e
-
-      - name: Show SSH fixture logs
-        if: always()
-        run: docker compose -f docker-compose.test.yml logs --no-color ssh-fixture
-
-      - name: Stop SSH fixture
-        if: always()
-        run: docker compose -f docker-compose.test.yml down --volumes --remove-orphans

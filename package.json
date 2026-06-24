@@ -52,7 +52,7 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --testPathPatterns=unit",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --coverage --testPathPatterns=\"(unit|integration)\"",
     "test:integration": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --testPathPatterns=integration",
-    "test:e2e": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --testPathPatterns=e2e",
+    "test:e2e": "node scripts/run-ssh-e2e.mjs",
     "test:perf": "node scripts/check-performance.mjs",
     "test:ci": "pnpm run test:coverage",
     "security": "pnpm audit --audit-level moderate && pnpm run check:licenses",
@@ -65,7 +65,8 @@
     "sbom": "node scripts/generate-sbom.mjs",
     "package:dry-run": "pnpm run build && npm pack --dry-run",
     "release:dry-run": "node scripts/release-state.mjs --dry-run",
-    "prepare": "pnpm run build"
+    "prepare": "pnpm run build",
+    "test:e2e:raw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --testPathPatterns=e2e"
   },
   "engines": {
     "node": ">=22"
