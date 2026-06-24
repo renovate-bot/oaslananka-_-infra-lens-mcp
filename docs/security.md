@@ -12,6 +12,14 @@ SSH host key verification is strict by default. A connection is accepted only wh
 
 `full` profile is for trusted local stdio development only. `remote-safe`, `chatgpt`, and `claude` profiles are for network-facing or connector deployments; they reject inline SSH secret fields before opening a connection, require `MCP_SSH_ALLOWED_HOSTS`, and expect identities to come from an external agent, preset identity, or gateway-managed environment.
 
+Production SSH policy controls are enforced before an SSH connection is opened:
+
+- `MCP_SSH_ALLOWED_HOSTS` supports exact host/IP entries and IPv4 CIDR ranges. It is required for remote-safe profiles and is also enforced in `full` profile when configured.
+- `MCP_SSH_ALLOWED_USERS` restricts allowed SSH usernames.
+- `MCP_SSH_ALLOWED_PORTS` restricts allowed SSH ports.
+- `MCP_SSH_MAX_SESSIONS_PER_HOST` caps active sessions per host and port.
+- `MCP_SSH_MAX_CONNECTION_ATTEMPTS_PER_MINUTE` caps connection attempts per host and port in a rolling minute window.
+
 ## Collector privacy
 
 - `include_processes=false` skips process collection.

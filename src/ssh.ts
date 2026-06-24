@@ -12,6 +12,8 @@ const logger = createLogger('ssh');
 const SHA256_FINGERPRINT_PREFIX = 'SHA256:';
 const BASE64_PADDING_CHARACTER = '=';
 let hasWarnedAboutPermissiveHostVerification = false;
+const activeSessionsByHost = new Map<string, number>();
+const attemptsByHost = new Map<string, { windowStart: number; count: number }>();
 
 export interface CommandResult {
   stdout: string;
@@ -132,17 +134,71 @@ function parseCsv(value: string | undefined): string[] {
     .filter(Boolean);
 }
 
+function parsePositiveInteger(value: string | undefined, defaultValue: number): number {
+  if (!value) {
+    return defaultValue;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
+}
+
+function parsePortList(value: string | undefined): number[] {
+  return parseCsv(value)
+    .map((entry) => Number.parseInt(entry, 10))
+    .filter((entry) => Number.isFinite(entry) && entry > 0 && entry <= 65_535);
+}
+
+function ipv4ToInteger(value: string): number | null {
+  const parts = value.split('.');
+  if (parts.length !== 4) {
+    return null;
+  }
+
+  const octets = parts.map((part) => Number.parseInt(part, 10));
+  if (octets.some((octet) => !Number.isFinite(octet) || octet < 0 || octet > 255)) {
+    return null;
+  }
+
+  return octets.reduce((acc, octet) => (acc << 8) + octet, 0) >>> 0;
+}
+
+function cidrContains(pattern: string, host: string): boolean {
+  const [network, prefixText] = pattern.split('/');
+  if (!network || !prefixText) {
+    return false;
+  }
+
+  const prefix = Number.parseInt(prefixText, 10);
+  if (!Number.isFinite(prefix) || prefix < 0 || prefix > 32) {
+    return false;
+  }
+
+  const networkValue = ipv4ToInteger(network);
+  const hostValue = ipv4ToInteger(host);
+  if (networkValue === null || hostValue === null) {
+    return false;
+  }
+
+  const mask = prefix === 0 ? 0 : (0xffffffff << (32 - prefix)) >>> 0;
+  return (networkValue & mask) === (hostValue & mask);
+}
+
+function allowlistEntryMatchesHost(entry: string, host: string): boolean {
+  return entry.includes('/') ? cidrContains(entry, host) : entry === host;
+}
 function isHostAllowed(host: string, allowedHosts: string[]): boolean {
   if (allowedHosts.length === 0) {
     return false;
   }
 
-  return allowedHosts.includes(host);
+  return allowedHosts.some((entry) => allowlistEntryMatchesHost(entry, host));
 }
 
 function assertProfileConnectionAllowed(connection: ConnectionInput): void {
   const profile = getRuntimeProfile();
   if (profile === 'full') {
+    assertSshPolicyConnectionAllowed(connection, profile);
     return;
   }
 
@@ -150,11 +206,91 @@ function assertProfileConnectionAllowed(connection: ConnectionInput): void {
     throw new Error(`${profile} profile does not accept raw SSH credentials in tool inputs.`);
   }
 
+  assertSshPolicyConnectionAllowed(connection, profile);
+}
+
+function assertSshPolicyConnectionAllowed(
+  connection: ConnectionInput,
+  profile: RuntimeProfile = getRuntimeProfile()
+): void {
   const allowedHosts = parseCsv(process.env.MCP_SSH_ALLOWED_HOSTS);
-  if (!isHostAllowed(connection.host, allowedHosts)) {
+  const allowedUsers = parseCsv(process.env.MCP_SSH_ALLOWED_USERS);
+  const allowedPorts = parsePortList(process.env.MCP_SSH_ALLOWED_PORTS);
+  const port = connection.port ?? 22;
+
+  if (profile !== 'full' && !isHostAllowed(connection.host, allowedHosts)) {
     throw new Error(
       `${profile} profile requires MCP_SSH_ALLOWED_HOSTS to include ${connection.host}.`
     );
+  }
+
+  if (
+    profile === 'full' &&
+    allowedHosts.length > 0 &&
+    !isHostAllowed(connection.host, allowedHosts)
+  ) {
+    throw new Error(`SSH host ${connection.host} is not allowed by MCP_SSH_ALLOWED_HOSTS.`);
+  }
+
+  if (allowedUsers.length > 0 && !allowedUsers.includes(connection.username)) {
+    throw new Error(`SSH username ${connection.username} is not allowed by MCP_SSH_ALLOWED_USERS.`);
+  }
+
+  if (allowedPorts.length > 0 && !allowedPorts.includes(port)) {
+    throw new Error(`SSH port ${port} is not allowed by MCP_SSH_ALLOWED_PORTS.`);
+  }
+}
+
+function hostPolicyKey(connection: ConnectionInput): string {
+  return `${connection.host}:${connection.port ?? 22}`;
+}
+
+function acquireHostConcurrencySlot(connection: ConnectionInput): boolean {
+  const limit = parsePositiveInteger(process.env.MCP_SSH_MAX_SESSIONS_PER_HOST, 0);
+  if (limit === 0) {
+    return true;
+  }
+
+  const key = hostPolicyKey(connection);
+  const active = activeSessionsByHost.get(key) ?? 0;
+  if (active >= limit) {
+    return false;
+  }
+
+  activeSessionsByHost.set(key, active + 1);
+  return true;
+}
+
+function releaseHostConcurrencySlot(connection: ConnectionInput): void {
+  const key = hostPolicyKey(connection);
+  const active = activeSessionsByHost.get(key) ?? 0;
+  if (active <= 1) {
+    activeSessionsByHost.delete(key);
+    return;
+  }
+
+  activeSessionsByHost.set(key, active - 1);
+}
+
+function assertConnectionAttemptAllowed(connection: ConnectionInput): void {
+  const limit = parsePositiveInteger(process.env.MCP_SSH_MAX_CONNECTION_ATTEMPTS_PER_MINUTE, 0);
+  if (limit === 0) {
+    return;
+  }
+
+  const key = hostPolicyKey(connection);
+  const currentWindow = Math.floor(Date.now() / 60_000);
+  const existing = attemptsByHost.get(key);
+  const entry =
+    existing && existing.windowStart === currentWindow
+      ? existing
+      : { windowStart: currentWindow, count: 0 };
+
+  entry.count += 1;
+  attemptsByHost.set(key, entry);
+
+  if (entry.count > limit) {
+    throw new Error(`SSH connection attempt limit exceeded for ${connection.host}.`);
   }
 }
 
@@ -305,6 +441,8 @@ export function createConnectConfig(connection: ConnectionInput): InfraLensConne
 
 export function resetSshWarningStateForTests(): void {
   hasWarnedAboutPermissiveHostVerification = false;
+  activeSessionsByHost.clear();
+  attemptsByHost.clear();
 }
 
 export async function withSshSession<T>(
@@ -315,14 +453,19 @@ export async function withSshSession<T>(
   const client = clientFactory();
   const session = new Ssh2Session(client);
   const config = createConnectConfig(connection);
-
-  await new Promise<void>((resolve, reject) => {
-    client.once('ready', () => resolve());
-    client.once('error', reject);
-    client.connect(config);
-  });
+  assertConnectionAttemptAllowed(connection);
+  const acquiredConcurrencySlot = acquireHostConcurrencySlot(connection);
+  if (!acquiredConcurrencySlot) {
+    throw new Error(`SSH session concurrency limit exceeded for ${connection.host}.`);
+  }
 
   try {
+    await new Promise<void>((resolve, reject) => {
+      client.once('ready', () => resolve());
+      client.once('error', reject);
+      client.connect(config);
+    });
+
     return await callback(session);
   } catch (error) {
     logger.error('SSH command execution failed', {
@@ -331,6 +474,7 @@ export async function withSshSession<T>(
     });
     throw error;
   } finally {
+    releaseHostConcurrencySlot(connection);
     session.close();
   }
 }

@@ -62,6 +62,12 @@ class FakeClient extends EventEmitter implements SshClientLike {
 
 afterEach(() => {
   resetSshWarningStateForTests();
+  delete process.env.MCP_PROFILE;
+  delete process.env.MCP_SSH_ALLOWED_HOSTS;
+  delete process.env.MCP_SSH_ALLOWED_USERS;
+  delete process.env.MCP_SSH_ALLOWED_PORTS;
+  delete process.env.MCP_SSH_MAX_SESSIONS_PER_HOST;
+  delete process.env.MCP_SSH_MAX_CONNECTION_ATTEMPTS_PER_MINUTE;
 });
 
 describe('ssh helpers', () => {
@@ -220,6 +226,111 @@ describe('ssh helpers', () => {
       }
     }
   );
+
+  it('supports CIDR host allowlists plus username and port policy controls', () => {
+    process.env.MCP_PROFILE = 'remote-safe';
+    process.env.MCP_SSH_ALLOWED_HOSTS = '10.10.0.0/24,db.internal';
+    process.env.MCP_SSH_ALLOWED_USERS = 'ops,deploy';
+    process.env.MCP_SSH_ALLOWED_PORTS = '22,2222';
+
+    expect(() =>
+      createConnectConfig({ host: '10.10.0.42', port: 2222, username: 'ops' })
+    ).not.toThrow();
+
+    expect(() => createConnectConfig({ host: '10.11.0.42', port: 2222, username: 'ops' })).toThrow(
+      /requires MCP_SSH_ALLOWED_HOSTS/
+    );
+
+    expect(() =>
+      createConnectConfig({ host: 'db.internal', port: 2222, username: 'root' })
+    ).toThrow(/MCP_SSH_ALLOWED_USERS/);
+
+    expect(() => createConnectConfig({ host: 'db.internal', port: 2200, username: 'ops' })).toThrow(
+      /MCP_SSH_ALLOWED_PORTS/
+    );
+  });
+
+  it('applies configured host allowlists in the full profile too', () => {
+    process.env.MCP_SSH_ALLOWED_HOSTS = 'db.internal';
+
+    expect(() =>
+      createConnectConfig({ host: 'db.internal', port: 22, username: 'ops' })
+    ).not.toThrow();
+    expect(() =>
+      createConnectConfig({ host: 'other.internal', port: 22, username: 'ops' })
+    ).toThrow(/not allowed/);
+  });
+
+  it('limits SSH connection attempts per host before connecting', async () => {
+    process.env.MCP_SSH_MAX_CONNECTION_ATTEMPTS_PER_MINUTE = '1';
+    const firstClient = new FakeClient((_command, callback) => {
+      callback(undefined, new FakeExecStream());
+    });
+    const secondClient = new FakeClient((_command, callback) => {
+      callback(undefined, new FakeExecStream());
+    });
+
+    await withSshSession(
+      { host: 'db.internal', port: 22, username: 'ops' },
+      async () => 'ok',
+      () => firstClient
+    );
+
+    await expect(
+      withSshSession(
+        { host: 'db.internal', port: 22, username: 'ops' },
+        async () => 'blocked',
+        () => secondClient
+      )
+    ).rejects.toThrow(/connection attempt limit exceeded/);
+    expect(secondClient.receivedConfig).toBeUndefined();
+  });
+
+  it('limits concurrent SSH sessions per host and releases the slot', async () => {
+    process.env.MCP_SSH_MAX_SESSIONS_PER_HOST = '1';
+    let releaseFirstSession!: () => void;
+    const firstClient = new FakeClient((_command, callback) => {
+      callback(undefined, new FakeExecStream());
+    });
+    const secondClient = new FakeClient((_command, callback) => {
+      callback(undefined, new FakeExecStream());
+    });
+
+    const firstSession = withSshSession(
+      { host: 'db.internal', port: 22, username: 'ops' },
+      async () =>
+        new Promise<string>((resolve) => {
+          releaseFirstSession = () => resolve('released');
+        }),
+      () => firstClient
+    );
+
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve);
+    });
+
+    await expect(
+      withSshSession(
+        { host: 'db.internal', port: 22, username: 'ops' },
+        async () => 'blocked',
+        () => secondClient
+      )
+    ).rejects.toThrow(/session concurrency limit exceeded/);
+    expect(secondClient.receivedConfig).toBeUndefined();
+
+    releaseFirstSession();
+
+    await expect(firstSession).resolves.toBe('released');
+
+    await expect(
+      withSshSession(
+        { host: 'db.internal', port: 22, username: 'ops' },
+        async () => 'allowed',
+        () => secondClient
+      )
+    ).resolves.toBe('allowed');
+  });
+
   it('executes SSH commands through the injected client and closes the session', async () => {
     const stream = new FakeExecStream();
     const client = new FakeClient((_command, callback) => {

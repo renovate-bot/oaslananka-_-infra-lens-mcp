@@ -8,7 +8,7 @@
 
 > **withSshSession**\<`T`\>(`connection`, `callback`, `clientFactory?`): `Promise`\<`T`\>
 
-Defined in: [ssh.ts:310](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L310)
+Defined in: [ssh.ts:448](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L448)
 
 ## Type Parameters
 

@@ -6,7 +6,7 @@
 
 # Interface: SshClientLike
 
-Defined in: [ssh.ts:37](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L37)
+Defined in: [ssh.ts:39](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L39)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [ssh.ts:37](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **exec**(`command`, `callback`): `void`
 
-Defined in: [ssh.ts:38](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L38)
+Defined in: [ssh.ts:40](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L40)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [ssh.ts:38](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **once**(`event`, `listener`): `this`
 
-Defined in: [ssh.ts:42](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L42)
+Defined in: [ssh.ts:44](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L44)
 
 ##### Parameters
 
@@ -58,7 +58,7 @@ Defined in: [ssh.ts:42](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **once**(`event`, `listener`): `this`
 
-Defined in: [ssh.ts:43](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L43)
+Defined in: [ssh.ts:45](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L45)
 
 ##### Parameters
 
@@ -80,7 +80,7 @@ Defined in: [ssh.ts:43](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **connect**(`config`): `void`
 
-Defined in: [ssh.ts:44](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L44)
+Defined in: [ssh.ts:46](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L46)
 
 #### Parameters
 
@@ -98,7 +98,7 @@ Defined in: [ssh.ts:44](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **end**(): `void`
 
-Defined in: [ssh.ts:45](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L45)
+Defined in: [ssh.ts:47](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L47)
 
 #### Returns
 

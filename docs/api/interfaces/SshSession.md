@@ -6,7 +6,7 @@
 
 # Interface: SshSession
 
-Defined in: [ssh.ts:22](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L22)
+Defined in: [ssh.ts:24](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L24)
 
 ## Methods
 
@@ -14,7 +14,7 @@ Defined in: [ssh.ts:22](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **exec**(`command`, `timeoutMs?`): `Promise`\<[`CommandResult`](CommandResult.md)\>
 
-Defined in: [ssh.ts:23](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L23)
+Defined in: [ssh.ts:25](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L25)
 
 #### Parameters
 
@@ -36,7 +36,7 @@ Defined in: [ssh.ts:23](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **close**(): `void`
 
-Defined in: [ssh.ts:24](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L24)
+Defined in: [ssh.ts:26](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L26)
 
 #### Returns
 

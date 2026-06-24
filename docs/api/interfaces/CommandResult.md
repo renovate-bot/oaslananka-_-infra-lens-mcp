@@ -6,7 +6,7 @@
 
 # Interface: CommandResult
 
-Defined in: [ssh.ts:16](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L16)
+Defined in: [ssh.ts:18](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L18)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [ssh.ts:16](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **stdout**: `string`
 
-Defined in: [ssh.ts:17](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L17)
+Defined in: [ssh.ts:19](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L19)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [ssh.ts:17](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **stderr**: `string`
 
-Defined in: [ssh.ts:18](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L18)
+Defined in: [ssh.ts:20](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L20)
 
 ***
 
@@ -30,4 +30,4 @@ Defined in: [ssh.ts:18](https://github.com/oaslananka/infra-lens-mcp/blob/main/s
 
 > **code**: `number`
 
-Defined in: [ssh.ts:19](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L19)
+Defined in: [ssh.ts:21](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/ssh.ts#L21)

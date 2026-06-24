@@ -8,10 +8,13 @@ import {
   it,
   jest
 } from '@jest/globals';
+import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, rmSync } from 'node:fs';
 import net from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import { Client } from 'ssh2';
 
 import { analyzeSnapshot } from '../../src/analyzer.js';
 import { collectSnapshot } from '../../src/collector.js';
@@ -36,6 +39,49 @@ function parsePayload<T>(result: { content: Array<{ text: string }> }): T {
   }
 
   return JSON.parse(payload) as T;
+}
+
+function fingerprintHostKey(key: Buffer): string {
+  return `SHA256:${createHash('sha256').update(key).digest('base64').replace(/=+$/, '')}`;
+}
+
+function captureFixtureHostFingerprint(host: string, port: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const client = new Client();
+    let fingerprint: string | undefined;
+    const timer = setTimeout(() => {
+      client.end();
+      reject(new Error('Timed out capturing SSH fixture host fingerprint.'));
+    }, 10_000);
+
+    client.once('ready', () => {
+      clearTimeout(timer);
+      client.end();
+      resolve(fingerprint ?? '');
+    });
+    client.once('error', (error) => {
+      clearTimeout(timer);
+      client.end();
+      if (fingerprint) {
+        resolve(fingerprint);
+        return;
+      }
+
+      reject(error);
+    });
+
+    client.connect({
+      host,
+      port,
+      username: 'invalid-user',
+      password: 'invalid-password',
+      readyTimeout: 5_000,
+      hostVerifier(key: Buffer) {
+        fingerprint = fingerprintHostKey(key);
+        return true;
+      }
+    });
+  });
 }
 
 async function waitForPort(host: string, port: number, timeoutMs = 30_000): Promise<void> {
@@ -120,6 +166,35 @@ describe('SSH fixture e2e', () => {
     expect(payload.metrics.cpu).toBeDefined();
     expect(payload.metrics.memory).toBeDefined();
     expect(Array.isArray(payload.metrics.disk)).toBe(true);
+  });
+
+  it('accepts the Docker SSH target with a pinned host fingerprint in strict mode', async () => {
+    const hostKeySha256 = await captureFixtureHostFingerprint(connection.host, connection.port);
+    const definitions = createToolDefinitions({
+      analyzeSnapshot,
+      collectSampledSnapshot: async (input) => collectSnapshot(input),
+      collectSnapshot,
+      getBaseline,
+      getHistory,
+      saveSnapshot
+    });
+
+    process.env.MCP_SSH_STRICT_HOST_CHECKING = 'true';
+    try {
+      const result = await definitions[1].handler({
+        connection: {
+          ...connection,
+          hostKeySha256
+        }
+      });
+      const payload = parsePayload<{ saved: boolean; host: string }>(result);
+
+      expect(hostKeySha256).toMatch(/^SHA256:/);
+      expect(payload.saved).toBe(true);
+      expect(payload.host).toBe(connection.host);
+    } finally {
+      process.env.MCP_SSH_STRICT_HOST_CHECKING = 'false';
+    }
   });
 
   it('records a real baseline sample and exposes it through labeled history', async () => {

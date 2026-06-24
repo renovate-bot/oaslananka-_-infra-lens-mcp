@@ -99,7 +99,11 @@ node dist/mcp.js
 | `MCP_PROFILE` | `full` | `full`, `remote-safe`, `chatgpt`, or `claude` |
 | `MCP_SSH_STRICT_HOST_CHECKING` | `true` | Strict host key verification toggle |
 | `MCP_SSH_KNOWN_HOSTS` | `~/.ssh/known_hosts` | Known hosts file |
-| `MCP_SSH_ALLOWED_HOSTS` | unset | Required host allowlist for remote-safe profiles |
+| `MCP_SSH_ALLOWED_HOSTS` | unset | Exact host/IP or IPv4 CIDR allowlist; required for remote-safe profiles and enforced in `full` profile when set |
+| `MCP_SSH_ALLOWED_USERS` | unset | Optional comma-separated SSH username allowlist |
+| `MCP_SSH_ALLOWED_PORTS` | unset | Optional comma-separated SSH port allowlist |
+| `MCP_SSH_MAX_SESSIONS_PER_HOST` | `0` | Optional active SSH session cap per host:port; `0` disables it |
+| `MCP_SSH_MAX_CONNECTION_ATTEMPTS_PER_MINUTE` | `0` | Optional SSH connection-attempt cap per host:port per minute; `0` disables it |
 
 `MCP_DB_PATH` from older examples is not used; use `INFRA_LENS_DB`.
 
@@ -111,7 +115,7 @@ Strict host key checking is enabled by default. Provide either:
 - a `knownHostsPath` in the connection input
 - `MCP_SSH_KNOWN_HOSTS` pointing at an OpenSSH `known_hosts` file
 
-Raw passwords, private keys, and passphrases are accepted only in the default `full` profile for trusted local MCP contexts. `remote-safe`, `chatgpt`, and `claude` profiles reject raw SSH credentials in tool input and require `MCP_SSH_ALLOWED_HOSTS`.
+Raw passwords, private keys, and passphrases are accepted only in the default `full` profile for trusted local MCP contexts. `remote-safe`, `chatgpt`, and `claude` profiles reject raw SSH credentials in tool input and require `MCP_SSH_ALLOWED_HOSTS`. Production SSH policy can also restrict exact hosts or IPv4 CIDR ranges, users, ports, per-host active sessions, and per-host connection attempts.
 
 Process command arguments are not collected by the default process command. Secret-like values in process data, SSH errors, and logs are redacted before storage or output.
 
