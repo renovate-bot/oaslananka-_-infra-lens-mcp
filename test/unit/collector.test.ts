@@ -1,6 +1,10 @@
 import { describe, expect, it, jest } from '@jest/globals';
 
-import { collectSampledSnapshot, collectSnapshot } from '../../src/collector.js';
+import {
+  collectSampledSnapshot,
+  collectSnapshot,
+  inspectHostCapabilities
+} from '../../src/collector.js';
 
 const connection = {
   host: 'server.example.com',
@@ -126,6 +130,36 @@ describe('collectSnapshot', () => {
       includeProcesses: false,
       includeNetwork: false
     });
+  });
+
+  it('preserves partial collection warnings while returning the available snapshot sections', async () => {
+    const snapshot = await collectSnapshot(connection, {
+      run: async () => ({
+        cpu: '25\n0.20 0.10 0.05 0/0 0\n2',
+        memory: '2048 1024 1024\n0 0',
+        disk: '/dev/sda1 / 20 5 25',
+        network: '',
+        processes: '',
+        os: '6.8.0\nserver.example.com\nUbuntu 24.04.1 LTS\n86400',
+        warnings: ['network skipped']
+      })
+    });
+
+    expect(snapshot.network).toEqual([]);
+    expect(snapshot.warnings).toEqual(['network skipped']);
+  });
+
+  it('returns host support checks and warnings', async () => {
+    const inspection = await inspectHostCapabilities(connection, {
+      run: async () => ({ cpu: '', memory: '', disk: '', network: '', processes: '', os: '' }),
+      inspectCapabilities: async () => [
+        { name: 'proc_stat', available: true, source: '/proc/stat' },
+        { name: 'ps', available: false, source: 'ps', detail: 'missing' }
+      ]
+    });
+
+    expect(inspection.capabilities).toHaveLength(2);
+    expect(inspection.warnings).toEqual(['ps is unavailable: missing']);
   });
 
   it('surfaces collection errors from the SSH layer', async () => {

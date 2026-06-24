@@ -8,4 +8,4 @@
 
 > **CompareInput** = `z.infer`\<*typeof* [`CompareSchema`](../variables/CompareSchema.md)\>
 
-Defined in: [types.ts:181](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L181)
+Defined in: [types.ts:204](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L204)

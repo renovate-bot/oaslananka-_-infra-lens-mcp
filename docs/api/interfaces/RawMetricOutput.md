@@ -6,7 +6,7 @@
 
 # Interface: RawMetricOutput
 
-Defined in: [collector.ts:13](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L13)
+Defined in: [collector.ts:14](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L14)
 
 Raw command output collected from a target Linux host.
 
@@ -16,7 +16,7 @@ Raw command output collected from a target Linux host.
 
 > **cpu**: `string`
 
-Defined in: [collector.ts:14](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L14)
+Defined in: [collector.ts:15](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L15)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [collector.ts:14](https://github.com/oaslananka/infra-lens-mcp/blob/
 
 > **memory**: `string`
 
-Defined in: [collector.ts:15](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L15)
+Defined in: [collector.ts:16](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L16)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [collector.ts:15](https://github.com/oaslananka/infra-lens-mcp/blob/
 
 > **disk**: `string`
 
-Defined in: [collector.ts:16](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L16)
+Defined in: [collector.ts:17](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L17)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [collector.ts:16](https://github.com/oaslananka/infra-lens-mcp/blob/
 
 > **network**: `string`
 
-Defined in: [collector.ts:17](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L17)
+Defined in: [collector.ts:18](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L18)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [collector.ts:17](https://github.com/oaslananka/infra-lens-mcp/blob/
 
 > **processes**: `string`
 
-Defined in: [collector.ts:18](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L18)
+Defined in: [collector.ts:19](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L19)
 
 ***
 
@@ -56,4 +56,12 @@ Defined in: [collector.ts:18](https://github.com/oaslananka/infra-lens-mcp/blob/
 
 > **os**: `string`
 
-Defined in: [collector.ts:19](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L19)
+Defined in: [collector.ts:20](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L20)
+
+***
+
+### warnings?
+
+> `optional` **warnings?**: `string`[]
+
+Defined in: [collector.ts:21](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L21)

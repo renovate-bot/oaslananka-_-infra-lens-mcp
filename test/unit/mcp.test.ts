@@ -31,7 +31,13 @@ const baseSnapshot: MetricSnapshot = {
   disk: [{ filesystem: '/dev/sda1', mount: '/', total_gb: 100, used_gb: 50, usage_percent: 50 }],
   network: [{ interface: 'eth0', rx_bytes: 123, tx_bytes: 456 }],
   processes: [{ pid: 100, name: 'node', cpu_percent: 12, mem_percent: 5, command: 'node api.js' }],
-  os: { hostname: 'app-01.internal', uptime_seconds: 3600, kernel: '6.8.0', distro: 'Ubuntu 24.04' }
+  os: {
+    hostname: 'app-01.internal',
+    uptime_seconds: 3600,
+    kernel: '6.8.0',
+    distro: 'Ubuntu 24.04'
+  },
+  warnings: []
 };
 
 describe('registerInfraLensTools', () => {
@@ -56,7 +62,8 @@ describe('registerInfraLensTools', () => {
       'snapshot',
       'record_baseline',
       'compare_to_baseline',
-      'get_history'
+      'get_history',
+      'inspect_host_capabilities'
     ]);
 
     for (const definition of toolDefinitions) {
@@ -108,6 +115,7 @@ describe('registerInfraLensTools', () => {
         load_mean: 0.7,
         sample_count: 3
       })),
+      inspectHostCapabilities: jest.fn(async () => ({ capabilities: [], warnings: [] })),
       getHistory: jest.fn(() => []),
       saveSnapshot: persistSnapshot
     });
@@ -163,6 +171,7 @@ describe('registerInfraLensTools', () => {
       collectSampledSnapshot: collectSampled,
       collectSnapshot: jest.fn(async () => baseSnapshot),
       getBaseline: jest.fn(() => null),
+      inspectHostCapabilities: jest.fn(async () => ({ capabilities: [], warnings: [] })),
       getHistory: jest.fn(() => [
         {
           timestamp: 1,
@@ -230,6 +239,7 @@ describe('registerInfraLensTools', () => {
         load_mean: 0.7,
         sample_count: 3
       })),
+      inspectHostCapabilities: jest.fn(async () => ({ capabilities: [], warnings: [] })),
       getHistory: jest.fn(() => [
         {
           timestamp: 1,
@@ -265,8 +275,18 @@ describe('registerInfraLensTools', () => {
       hours: 24,
       label: 'weekday-normal'
     } satisfies GetHistoryInput);
+    const capabilitiesResult = await definitions[5].handler({
+      connection: { host: 'app-01.internal', port: 22, username: 'ops' }
+    });
 
-    const results = [analyzeResult, snapshotResult, baselineResult, compareResult, historyResult];
+    const results = [
+      analyzeResult,
+      snapshotResult,
+      baselineResult,
+      compareResult,
+      historyResult,
+      capabilitiesResult
+    ];
 
     definitions.forEach((definition, index) => {
       const result = results[index]!;
@@ -297,11 +317,12 @@ describe('registerInfraLensTools', () => {
       collectSampledSnapshot: jest.fn(async () => baseSnapshot),
       collectSnapshot: jest.fn(async () => baseSnapshot),
       getBaseline: jest.fn(() => null),
+      inspectHostCapabilities: jest.fn(async () => ({ capabilities: [], warnings: [] })),
       getHistory: jest.fn(() => []),
       saveSnapshot: jest.fn(() => undefined)
     });
 
-    expect(server.registered).toHaveLength(5);
+    expect(server.registered).toHaveLength(6);
 
     await server.registered[0]!.handler({
       connection: { host: 'app-01.internal', port: 22, username: 'ops' },

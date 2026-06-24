@@ -40,6 +40,10 @@ export const SnapshotSchema = z.object({
   connection: ConnectionSchema
 });
 
+export const CapabilitySchema = z.object({
+  connection: ConnectionSchema
+});
+
 export const BaselineSchema = z.object({
   connection: ConnectionSchema,
   label: z
@@ -121,6 +125,13 @@ export const AnomalySchema = z.object({
   recommendation: z.string()
 });
 
+export const HostCapabilitySchema = z.object({
+  name: z.string(),
+  available: z.boolean(),
+  source: z.string(),
+  detail: z.string().optional()
+});
+
 export const AnalyzeOutputSchema = z.object({
   host: z.string(),
   timestamp: z.string(),
@@ -134,13 +145,15 @@ export const AnalyzeOutputSchema = z.object({
     disk: z.array(DiskMetricSchema),
     top_processes: z.array(ProcessMetricSchema),
     network: z.array(NetworkMetricSchema)
-  })
+  }),
+  warnings: z.array(z.string())
 });
 
 export const SnapshotOutputSchema = z.object({
   saved: z.boolean(),
   host: z.string(),
-  timestamp: z.number().int()
+  timestamp: z.number().int(),
+  warnings: z.array(z.string())
 });
 
 export const BaselineOutputSchema = z.object({
@@ -148,7 +161,8 @@ export const BaselineOutputSchema = z.object({
   host: z.string(),
   label: z.string(),
   sample_count: z.number().int().min(1),
-  message: z.string()
+  message: z.string(),
+  warnings: z.array(z.string())
 });
 
 export const CompareOutputSchema = z.object({
@@ -157,7 +171,15 @@ export const CompareOutputSchema = z.object({
   baseline_samples: z.number().int().min(0),
   health_score: z.number().min(0).max(100),
   summary: z.string(),
-  anomalies: z.array(AnomalySchema)
+  anomalies: z.array(AnomalySchema),
+  warnings: z.array(z.string())
+});
+
+export const InspectCapabilitiesOutputSchema = z.object({
+  host: z.string(),
+  checked_at: z.string(),
+  capabilities: z.array(HostCapabilitySchema),
+  warnings: z.array(z.string())
 });
 
 export const HistoryPointSchema = z.object({
@@ -177,6 +199,7 @@ export const GetHistoryOutputSchema = z.object({
 export type ConnectionInput = z.infer<typeof ConnectionSchema>;
 export type AnalyzeInput = z.infer<typeof AnalyzeSchema>;
 export type SnapshotInput = z.infer<typeof SnapshotSchema>;
+export type CapabilityInput = z.infer<typeof CapabilitySchema>;
 export type BaselineInput = z.infer<typeof BaselineSchema>;
 export type CompareInput = z.infer<typeof CompareSchema>;
 export type GetHistoryInput = z.infer<typeof GetHistorySchema>;
@@ -262,6 +285,14 @@ export interface MetricSnapshot {
     kernel: string;
     distro: string;
   };
+  warnings: string[];
+}
+
+export interface HostCapability {
+  name: string;
+  available: boolean;
+  source: string;
+  detail?: string;
 }
 
 export interface Anomaly {

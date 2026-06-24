@@ -17,6 +17,22 @@ Default `full` profile inputs may include local SSH credentials:
 
 For `remote-safe`, `chatgpt`, and `claude` profiles, raw `password`, `privateKey`, and `passphrase` fields are rejected. Use an external SSH agent or gateway-managed credentials and set `MCP_SSH_ALLOWED_HOSTS`.
 
+
+## Inspect host capabilities
+
+Use `inspect_host_capabilities` before onboarding a new host or minimal container image. The tool reports whether required files and commands such as `/proc/stat`, `/proc/loadavg`, `/proc/net/dev`, `free`, `df`, `awk`, `ps`, and `uname` are available. Missing optional capabilities are returned as structured warnings so an agent can explain degraded collection before attempting analysis.
+
+```json
+{
+  "connection": {
+    "host": "server.example.com",
+    "port": 22,
+    "username": "ops",
+    "hostKeySha256": "SHA256:..."
+  }
+}
+```
+
 ## Analyze a server
 
 ```json
@@ -36,7 +52,7 @@ For `remote-safe`, `chatgpt`, and `claude` profiles, raw `password`, `privateKey
 
 ## Tool outputs
 
-Every tool returns a backward-compatible JSON text block and the same payload as MCP `structuredContent`. Each tool also declares an `outputSchema`, allowing MCP clients to validate and consume machine-readable fields directly.
+Every tool returns a backward-compatible JSON text block and the same payload as MCP `structuredContent`. Each tool also declares an `outputSchema`, allowing MCP clients to validate and consume machine-readable fields directly. Collector-backed outputs include `warnings` when optional sections degrade gracefully.
 
 For example, `analyze_server` exposes typed fields such as `host`, `timestamp`, `collection_window_minutes`, `health_score`, `summary`, `anomalies`, and `metrics`. `get_history` exposes `data_points` and a `history` array of `{ timestamp, value }` points for charting or follow-up reasoning.
 

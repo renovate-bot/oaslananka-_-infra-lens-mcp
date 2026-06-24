@@ -31,8 +31,9 @@ See the [MCP 2025-11-25 compliance matrix](./docs/compliance/mcp-2025-11-25.md) 
 | `record_baseline` | Save a labeled healthy-state sample |
 | `compare_to_baseline` | Compare current state with a named baseline |
 | `get_history` | Return CPU, memory, or load history from SQLite |
+| `inspect_host_capabilities` | Check required Linux commands and proc files before collection |
 
-All tools return both readable JSON text and MCP `structuredContent` validated by declared `outputSchema` definitions, so clients and agents can consume responses without parsing the text block.
+All tools return both readable JSON text and MCP `structuredContent` validated by declared `outputSchema` definitions, so clients and agents can consume responses without parsing the text block. Collection tools include a `warnings` array when optional sections cannot be collected but a partial snapshot is still usable.
 
 ## Requirements
 

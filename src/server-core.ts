@@ -3,21 +3,24 @@ import type { AnySchema } from '@modelcontextprotocol/sdk/server/zod-compat.js';
 
 import { analyzeSnapshot } from './analyzer.js';
 import { getBaseline, getHistory, saveSnapshot } from './baseline.js';
-import { collectSampledSnapshot, collectSnapshot } from './collector.js';
+import { collectSampledSnapshot, collectSnapshot, inspectHostCapabilities } from './collector.js';
 import {
   AnalyzeOutputSchema,
   AnalyzeSchema,
   BaselineOutputSchema,
   BaselineSchema,
+  CapabilitySchema,
   CompareOutputSchema,
   CompareSchema,
   GetHistoryOutputSchema,
   GetHistorySchema,
+  InspectCapabilitiesOutputSchema,
   SafeConnectionSchema,
   SnapshotOutputSchema,
   SnapshotSchema,
   type AnalyzeInput,
   type BaselineInput,
+  type CapabilityInput,
   type CompareInput,
   type GetHistoryInput,
   type RuntimeProfile,
@@ -59,7 +62,8 @@ export type ToolDefinitionTuple = [
   ToolDefinition<SnapshotInput>,
   ToolDefinition<BaselineInput>,
   ToolDefinition<CompareInput>,
-  ToolDefinition<GetHistoryInput>
+  ToolDefinition<GetHistoryInput>,
+  ToolDefinition<CapabilityInput>
 ];
 
 export interface ToolRegistrar {
@@ -70,6 +74,7 @@ export interface ToolDependencies {
   analyzeSnapshot: typeof analyzeSnapshot;
   collectSampledSnapshot: typeof collectSampledSnapshot;
   collectSnapshot: typeof collectSnapshot;
+  inspectHostCapabilities: typeof inspectHostCapabilities;
   getBaseline: typeof getBaseline;
   getHistory: typeof getHistory;
   saveSnapshot: typeof saveSnapshot;
@@ -83,6 +88,7 @@ const defaultDependencies: ToolDependencies = {
   analyzeSnapshot,
   collectSampledSnapshot,
   collectSnapshot,
+  inspectHostCapabilities,
   getBaseline,
   getHistory,
   saveSnapshot
@@ -132,7 +138,8 @@ function createSchemas(profile: RuntimeProfile) {
       analyze: AnalyzeSchema,
       snapshot: SnapshotSchema,
       baseline: BaselineSchema,
-      compare: CompareSchema
+      compare: CompareSchema,
+      capabilities: CapabilitySchema
     };
   }
 
@@ -140,7 +147,8 @@ function createSchemas(profile: RuntimeProfile) {
     analyze: AnalyzeSchema.extend({ connection: connectionSchema }),
     snapshot: SnapshotSchema.extend({ connection: connectionSchema }),
     baseline: BaselineSchema.extend({ connection: connectionSchema }),
-    compare: CompareSchema.extend({ connection: connectionSchema })
+    compare: CompareSchema.extend({ connection: connectionSchema }),
+    capabilities: CapabilitySchema.extend({ connection: connectionSchema })
   };
 }
 
@@ -188,7 +196,8 @@ export function createToolDefinitions(
             disk: snapshot.disk,
             top_processes: input.include_processes ? snapshot.processes.slice(0, 5) : [],
             network: input.include_network ? snapshot.network : []
-          }
+          },
+          warnings: snapshot.warnings
         });
       }
     },
@@ -207,7 +216,8 @@ export function createToolDefinitions(
         return structuredResult({
           saved: true,
           host: snapshot.host,
-          timestamp: snapshot.timestamp
+          timestamp: snapshot.timestamp,
+          warnings: snapshot.warnings
         });
       }
     },
@@ -236,7 +246,8 @@ export function createToolDefinitions(
           message:
             sampleCount >= 10
               ? `Baseline established with ${sampleCount} samples.`
-              : `Recorded baseline sample. ${samplesRemaining} more sample(s) recommended for reliable anomaly detection.`
+              : `Recorded baseline sample. ${samplesRemaining} more sample(s) recommended for reliable anomaly detection.`,
+          warnings: snapshot.warnings
         });
       }
     },
@@ -260,7 +271,8 @@ export function createToolDefinitions(
           baseline_samples: baseline?.sample_count ?? 0,
           health_score: analysis.health_score,
           summary: analysis.summary,
-          anomalies: analysis.anomalies
+          anomalies: analysis.anomalies,
+          warnings: snapshot.warnings
         });
       }
     },
@@ -282,6 +294,25 @@ export function createToolDefinitions(
           label: input.label ?? null,
           data_points: history.length,
           history
+        });
+      }
+    },
+    {
+      name: 'inspect_host_capabilities',
+      config: {
+        title: 'Inspect Host Capabilities',
+        description: 'Check whether a Linux host supports infra-lens collection',
+        inputSchema: schemas.capabilities,
+        outputSchema: InspectCapabilitiesOutputSchema,
+        annotations: { readOnlyHint: true, destructiveHint: false, openWorldHint: true }
+      },
+      handler: async (input) => {
+        const inspection = await dependencies.inspectHostCapabilities(input.connection);
+        return structuredResult({
+          host: input.connection.host,
+          checked_at: new Date().toISOString(),
+          capabilities: inspection.capabilities,
+          warnings: inspection.warnings
         });
       }
     }

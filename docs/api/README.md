@@ -23,6 +23,7 @@
 - [NetworkMetric](interfaces/NetworkMetric.md)
 - [ProcessMetric](interfaces/ProcessMetric.md)
 - [MetricSnapshot](interfaces/MetricSnapshot.md)
+- [HostCapability](interfaces/HostCapability.md)
 - [Anomaly](interfaces/Anomaly.md)
 - [StoredSnapshotRow](interfaces/StoredSnapshotRow.md)
 
@@ -35,6 +36,7 @@
 - [ConnectionInput](type-aliases/ConnectionInput.md)
 - [AnalyzeInput](type-aliases/AnalyzeInput.md)
 - [SnapshotInput](type-aliases/SnapshotInput.md)
+- [CapabilityInput](type-aliases/CapabilityInput.md)
 - [BaselineInput](type-aliases/BaselineInput.md)
 - [CompareInput](type-aliases/CompareInput.md)
 - [GetHistoryInput](type-aliases/GetHistoryInput.md)
@@ -48,10 +50,13 @@
 - [SafeConnectionSchema](variables/SafeConnectionSchema.md)
 - [AnalyzeSchema](variables/AnalyzeSchema.md)
 - [SnapshotSchema](variables/SnapshotSchema.md)
+- [CapabilitySchema](variables/CapabilitySchema.md)
 - [BaselineSchema](variables/BaselineSchema.md)
 - [CompareSchema](variables/CompareSchema.md)
 - [MetricNameSchema](variables/MetricNameSchema.md)
 - [GetHistorySchema](variables/GetHistorySchema.md)
+- [HostCapabilitySchema](variables/HostCapabilitySchema.md)
+- [InspectCapabilitiesOutputSchema](variables/InspectCapabilitiesOutputSchema.md)
 - [DEFAULT\_THRESHOLDS](variables/DEFAULT_THRESHOLDS.md)
 
 ## Functions
@@ -60,6 +65,7 @@
 - [saveSnapshot](functions/saveSnapshot.md)
 - [getBaseline](functions/getBaseline.md)
 - [getHistory](functions/getHistory.md)
+- [inspectHostCapabilities](functions/inspectHostCapabilities.md)
 - [collectSnapshot](functions/collectSnapshot.md)
 - [collectSampledSnapshot](functions/collectSampledSnapshot.md)
 - [resolveDatabasePath](functions/resolveDatabasePath.md)

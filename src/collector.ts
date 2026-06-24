@@ -4,6 +4,7 @@ import type {
   CollectionOptions,
   ConnectionInput,
   DiskMetric,
+  HostCapability,
   MetricSnapshot,
   NetworkMetric,
   ProcessMetric
@@ -17,11 +18,13 @@ export interface RawMetricOutput {
   network: string;
   processes: string;
   os: string;
+  warnings?: string[];
 }
 
 /** Pluggable collector runner used by tests and SSH-backed collection. */
 export interface CollectorRunner {
   run(connection: ConnectionInput, options: CollectionOptions): Promise<RawMetricOutput>;
+  inspectCapabilities?(connection: ConnectionInput): Promise<HostCapability[]>;
 }
 
 const CPU_COMMAND =
@@ -34,12 +37,25 @@ const NETWORK_COMMAND =
   'export LC_ALL=C; cat /proc/net/dev | awk \'NR>2 {gsub(":", "", $1); if ($1 != "lo") print $1, $2, $10}\'';
 const PROCESS_COMMAND =
   'export LC_ALL=C; ps -eo pid,comm,%cpu,%mem --sort=-%cpu | awk \'NR>1 && NR<=11 {printf "%s\\t%s\\t%s\\t%s\\t%s\\n", $1, $2, $3, $4, $2}\'';
+
+const CAPABILITY_CHECKS: Array<{ name: string; source: string; command: string }> = [
+  { name: 'proc_stat', source: '/proc/stat', command: 'test -r /proc/stat' },
+  { name: 'proc_loadavg', source: '/proc/loadavg', command: 'test -r /proc/loadavg' },
+  { name: 'proc_net_dev', source: '/proc/net/dev', command: 'test -r /proc/net/dev' },
+  { name: 'free', source: 'free', command: 'command -v free >/dev/null 2>&1' },
+  { name: 'df', source: 'df', command: 'command -v df >/dev/null 2>&1' },
+  { name: 'awk', source: 'awk', command: 'command -v awk >/dev/null 2>&1' },
+  { name: 'ps', source: 'ps', command: 'command -v ps >/dev/null 2>&1' },
+  { name: 'uname', source: 'uname', command: 'command -v uname >/dev/null 2>&1' }
+];
+
 const OS_COMMAND =
   'export LC_ALL=C; uname -r; hostname; (source /etc/os-release 2>/dev/null && printf "%s\\n" "$PRETTY_NAME") || echo Unknown; awk \'{print $1}\' /proc/uptime';
 
 class SshCollectorRunner implements CollectorRunner {
   async run(connection: ConnectionInput, options: CollectionOptions): Promise<RawMetricOutput> {
     return withSshSession(connection, async (session) => {
+      const warnings: string[] = [];
       const [cpu, memory, disk, network, processes, os] = await Promise.all([
         session.exec(CPU_COMMAND),
         session.exec(MEMORY_COMMAND),
@@ -51,23 +67,36 @@ class SshCollectorRunner implements CollectorRunner {
       assertCommandSucceeded('cpu', cpu);
       assertCommandSucceeded('memory', memory);
       assertCommandSucceeded('disk', disk);
-      if (network) {
-        assertCommandSucceeded('network', network);
-      }
-      if (processes) {
-        assertCommandSucceeded('processes', processes);
-      }
       assertCommandSucceeded('os', os);
 
       return {
         cpu: cpu.stdout,
         memory: memory.stdout,
         disk: disk.stdout,
-        network: network?.stdout ?? '',
-        processes: processes?.stdout ?? '',
-        os: os.stdout
+        network: commandOutputOrWarning('network', network, warnings),
+        processes: commandOutputOrWarning('processes', processes, warnings),
+        os: os.stdout,
+        warnings
       };
     });
+  }
+
+  async inspectCapabilities(connection: ConnectionInput): Promise<HostCapability[]> {
+    return withSshSession(connection, async (session) =>
+      Promise.all(
+        CAPABILITY_CHECKS.map(async (check) => {
+          const result = await session.exec(check.command);
+          return {
+            name: check.name,
+            available: result.code === 0,
+            source: check.source,
+            ...(result.code === 0
+              ? {}
+              : { detail: redactSecrets(result.stderr || `exit code ${result.code}`) })
+          };
+        })
+      )
+    );
   }
 }
 
@@ -84,6 +113,24 @@ function assertCommandSucceeded(
     const detail = redactSecrets(result.stderr || `exit code ${result.code}`);
     throw new Error(`SSH ${name} collection failed: ${detail}`);
   }
+}
+
+function commandOutputOrWarning(
+  name: string,
+  result: { code: number; stderr: string; stdout: string } | null,
+  warnings: string[]
+): string {
+  if (!result) {
+    return '';
+  }
+
+  if (result.code === 0 && result.stderr.length === 0) {
+    return result.stdout;
+  }
+
+  const detail = redactSecrets(result.stderr || `exit code ${result.code}`);
+  warnings.push(`SSH ${name} collection skipped: ${detail}`);
+  return '';
 }
 
 function averageSnapshots(
@@ -204,6 +251,28 @@ function redactProcessCommand(command: string): string {
   return redactSecrets(command);
 }
 
+export async function inspectHostCapabilities(
+  connection: ConnectionInput,
+  runner: CollectorRunner = new SshCollectorRunner()
+): Promise<{ capabilities: HostCapability[]; warnings: string[] }> {
+  if (!runner.inspectCapabilities) {
+    return {
+      capabilities: [],
+      warnings: ['Collector runner does not support capability inspection.']
+    };
+  }
+
+  const capabilities = await runner.inspectCapabilities(connection);
+  const warnings = capabilities
+    .filter((capability) => !capability.available)
+    .map(
+      (capability) =>
+        `${capability.name} is unavailable${capability.detail ? `: ${capability.detail}` : ''}`
+    );
+
+  return { capabilities, warnings };
+}
+
 export async function collectSnapshot(
   connection: ConnectionInput,
   runner: CollectorRunner = new SshCollectorRunner(),
@@ -239,7 +308,8 @@ export async function collectSnapshot(
       hostname: osLines[1] || connection.host,
       distro: osLines[2] || 'Unknown',
       uptime_seconds: Number.parseFloat(osLines[3] ?? '0')
-    }
+    },
+    warnings: raw.warnings ?? []
   };
 }
 

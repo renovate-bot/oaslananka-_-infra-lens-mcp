@@ -8,4 +8,4 @@
 
 > **ConnectionInput** = `z.infer`\<*typeof* [`ConnectionSchema`](../variables/ConnectionSchema.md)\>
 
-Defined in: [types.ts:177](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L177)
+Defined in: [types.ts:199](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L199)

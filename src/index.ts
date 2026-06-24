@@ -1,10 +1,13 @@
 export {
   AnalyzeSchema,
   BaselineSchema,
+  CapabilitySchema,
   CompareSchema,
   ConnectionSchema,
   DEFAULT_THRESHOLDS,
   GetHistorySchema,
+  HostCapabilitySchema,
+  InspectCapabilitiesOutputSchema,
   MetricNameSchema,
   SafeConnectionSchema,
   SnapshotSchema
@@ -16,7 +19,7 @@ export {
   toolDefinitions
 } from './server-core.js';
 export { analyzeSnapshot } from './analyzer.js';
-export { collectSampledSnapshot, collectSnapshot } from './collector.js';
+export { collectSampledSnapshot, collectSnapshot, inspectHostCapabilities } from './collector.js';
 export { getBaseline, getHistory, saveSnapshot } from './baseline.js';
 export { closeAllDatabases, getDatabase, resolveDatabasePath } from './db.js';
 export { createConnectConfig, withSshSession } from './ssh.js';
@@ -44,11 +47,13 @@ export type {
   Anomaly,
   AnalyzeInput,
   BaselineInput,
+  CapabilityInput,
   CollectionOptions,
   CompareInput,
   ConnectionInput,
   DiskMetric,
   GetHistoryInput,
+  HostCapability,
   MetricSnapshot,
   MetricName,
   NetworkMetric,
