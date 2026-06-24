@@ -6,7 +6,7 @@
 
 # Interface: CollectionOptions
 
-Defined in: [types.ts:210](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L210)
+Defined in: [types.ts:225](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L225)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:210](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **includeProcesses**: `boolean`
 
-Defined in: [types.ts:211](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L211)
+Defined in: [types.ts:226](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L226)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [types.ts:211](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **includeNetwork**: `boolean`
 
-Defined in: [types.ts:212](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L212)
+Defined in: [types.ts:227](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L227)

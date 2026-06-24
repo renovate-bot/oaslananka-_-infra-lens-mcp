@@ -96,3 +96,14 @@ Repeat baseline collection during healthy windows. CPU z-score anomaly detection
 ```
 
 Leave `label` unset to return all snapshots for the host, or set it to isolate a named baseline stream.
+
+## Expanded Linux diagnosis signals
+
+Snapshots include additional Linux signals beyond CPU, memory, disk space, processes, and byte counters:
+
+- `disk[].inode_total`, `disk[].inode_used`, and `disk[].inode_usage_percent` expose inode pressure for hosts that run out of file entries before space.
+- `network[].rx_packets`, `network[].tx_packets`, `network[].rx_errors`, `network[].tx_errors`, `network[].rx_dropped`, and `network[].tx_dropped` expose NIC or upstream packet quality problems.
+- `system.failed_units` and `system.kernel_error_events` summarize service failures and recent kernel-level error signals.
+
+`analyze_server` reports these as `disk_inode:*`, `network:*`, `system:failed_units`, and `system:kernel_errors` anomalies when they indicate operational risk. The fields are also returned in `structuredContent` for agent-friendly triage.
+

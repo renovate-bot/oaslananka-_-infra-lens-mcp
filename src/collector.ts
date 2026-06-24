@@ -7,7 +7,8 @@ import type {
   HostCapability,
   MetricSnapshot,
   NetworkMetric,
-  ProcessMetric
+  ProcessMetric,
+  SystemMetric
 } from './types.js';
 
 /** Raw command output collected from a target Linux host. */
@@ -15,7 +16,9 @@ export interface RawMetricOutput {
   cpu: string;
   memory: string;
   disk: string;
+  diskInodes?: string;
   network: string;
+  system?: string;
   processes: string;
   os: string;
   warnings?: string[];
@@ -33,8 +36,12 @@ const MEMORY_COMMAND =
   "export LC_ALL=C; free -m | awk 'NR==2 {print $2, $3, $7} NR==3 {print $3, $2}'";
 const DISK_COMMAND =
   'export LC_ALL=C; df -BG --output=source,target,size,used,pcent | awk \'NR>1 && $1 != "tmpfs" && $1 != "udev" {gsub("G", "", $3); gsub("G", "", $4); gsub("%", "", $5); print $1, $2, $3, $4, $5}\'';
+const DISK_INODE_COMMAND =
+  'export LC_ALL=C; df -Pi --output=source,target,itotal,iused,ipcent | awk \'NR>1 && $1 != "tmpfs" && $1 != "udev" {gsub("%", "", $5); print $1, $2, $3, $4, $5}\'';
 const NETWORK_COMMAND =
-  'export LC_ALL=C; cat /proc/net/dev | awk \'NR>2 {gsub(":", "", $1); if ($1 != "lo") print $1, $2, $10}\'';
+  'export LC_ALL=C; cat /proc/net/dev | awk \'NR>2 {gsub(":", "", $1); if ($1 != "lo") print $1, $2, $10, $3, $11, $4, $12, $5, $13}\'';
+const SYSTEM_COMMAND =
+  'export LC_ALL=C; failed=0; if command -v systemctl >/dev/null 2>&1; then failed=$(systemctl --failed --no-legend --plain --no-pager 2>/dev/null | wc -l | tr -d " "); fi; printf "failed_units %s\n" "${failed:-0}"; kernel_errors=0; if command -v dmesg >/dev/null 2>&1; then kernel_errors=$(dmesg -T --level=err,crit,alert,emerg 2>/dev/null | tail -20 | wc -l | tr -d " " || true); fi; printf "kernel_error_events %s\n" "${kernel_errors:-0}"';
 const PROCESS_COMMAND =
   'export LC_ALL=C; ps -eo pid,comm,%cpu,%mem --sort=-%cpu | awk \'NR>1 && NR<=11 {printf "%s\\t%s\\t%s\\t%s\\t%s\\n", $1, $2, $3, $4, $2}\'';
 
@@ -44,8 +51,11 @@ const CAPABILITY_CHECKS: Array<{ name: string; source: string; command: string }
   { name: 'proc_net_dev', source: '/proc/net/dev', command: 'test -r /proc/net/dev' },
   { name: 'free', source: 'free', command: 'command -v free >/dev/null 2>&1' },
   { name: 'df', source: 'df', command: 'command -v df >/dev/null 2>&1' },
+  { name: 'df_inodes', source: 'df -Pi', command: 'df -Pi / >/dev/null 2>&1' },
   { name: 'awk', source: 'awk', command: 'command -v awk >/dev/null 2>&1' },
   { name: 'ps', source: 'ps', command: 'command -v ps >/dev/null 2>&1' },
+  { name: 'systemctl', source: 'systemctl', command: 'command -v systemctl >/dev/null 2>&1' },
+  { name: 'dmesg', source: 'dmesg', command: 'command -v dmesg >/dev/null 2>&1' },
   { name: 'uname', source: 'uname', command: 'command -v uname >/dev/null 2>&1' }
 ];
 
@@ -56,11 +66,13 @@ class SshCollectorRunner implements CollectorRunner {
   async run(connection: ConnectionInput, options: CollectionOptions): Promise<RawMetricOutput> {
     return withSshSession(connection, async (session) => {
       const warnings: string[] = [];
-      const [cpu, memory, disk, network, processes, os] = await Promise.all([
+      const [cpu, memory, disk, diskInodes, network, system, processes, os] = await Promise.all([
         session.exec(CPU_COMMAND),
         session.exec(MEMORY_COMMAND),
         session.exec(DISK_COMMAND),
+        session.exec(DISK_INODE_COMMAND),
         options.includeNetwork ? session.exec(NETWORK_COMMAND) : Promise.resolve(null),
+        session.exec(SYSTEM_COMMAND),
         options.includeProcesses ? session.exec(PROCESS_COMMAND) : Promise.resolve(null),
         session.exec(OS_COMMAND)
       ]);
@@ -73,7 +85,9 @@ class SshCollectorRunner implements CollectorRunner {
         cpu: cpu.stdout,
         memory: memory.stdout,
         disk: disk.stdout,
+        diskInodes: commandOutputOrWarning('disk inode', diskInodes, warnings),
         network: commandOutputOrWarning('network', network, warnings),
+        system: commandOutputOrWarning('system', system, warnings),
         processes: commandOutputOrWarning('processes', processes, warnings),
         os: os.stdout,
         warnings
@@ -192,7 +206,19 @@ function calculateCpuDeltaPercent(firstStat: string[], secondStat: string[]): nu
   return roundTo(Math.max(0, Math.min(100, (1 - idleDelta / totalDelta) * 100)));
 }
 
-function parseDiskMetrics(raw: string): DiskMetric[] {
+function parseDiskMetrics(raw: string, inodeRaw = ''): DiskMetric[] {
+  const inodeByMount = new Map<string, Partial<DiskMetric>>();
+  for (const parts of inodeRaw
+    .split('\n')
+    .map((line) => splitFields(line))
+    .filter((candidate) => candidate.length >= 5)) {
+    inodeByMount.set(`${parts[0] ?? ''}\0${parts[1] ?? ''}`, {
+      inode_total: Number.parseInt(parts[2] ?? '0', 10),
+      inode_used: Number.parseInt(parts[3] ?? '0', 10),
+      inode_usage_percent: Number.parseFloat(parts[4] ?? '0')
+    });
+  }
+
   return raw
     .split('\n')
     .map((line) => splitFields(line))
@@ -202,7 +228,8 @@ function parseDiskMetrics(raw: string): DiskMetric[] {
       mount: parts[1] ?? '',
       total_gb: Number.parseFloat(parts[2] ?? '0'),
       used_gb: Number.parseFloat(parts[3] ?? '0'),
-      usage_percent: Number.parseFloat(parts[4] ?? '0')
+      usage_percent: Number.parseFloat(parts[4] ?? '0'),
+      ...inodeByMount.get(`${parts[0] ?? ''}\0${parts[1] ?? ''}`)
     }));
 }
 
@@ -214,8 +241,33 @@ function parseNetworkMetrics(raw: string): NetworkMetric[] {
     .map((parts) => ({
       interface: parts[0] ?? '',
       rx_bytes: Number.parseInt(parts[1] ?? '0', 10),
-      tx_bytes: Number.parseInt(parts[2] ?? '0', 10)
+      tx_bytes: Number.parseInt(parts[2] ?? '0', 10),
+      ...(parts.length >= 9
+        ? {
+            rx_packets: Number.parseInt(parts[3] ?? '0', 10),
+            tx_packets: Number.parseInt(parts[4] ?? '0', 10),
+            rx_errors: Number.parseInt(parts[5] ?? '0', 10),
+            tx_errors: Number.parseInt(parts[6] ?? '0', 10),
+            rx_dropped: Number.parseInt(parts[7] ?? '0', 10),
+            tx_dropped: Number.parseInt(parts[8] ?? '0', 10)
+          }
+        : {})
     }));
+}
+
+function parseSystemMetrics(raw: string): SystemMetric {
+  const values = new Map<string, number>();
+  for (const parts of raw
+    .split('\n')
+    .map((line) => splitFields(line))
+    .filter((candidate) => candidate.length >= 2)) {
+    values.set(parts[0] ?? '', Number.parseInt(parts[1] ?? '0', 10));
+  }
+
+  return {
+    failed_units: values.get('failed_units') ?? 0,
+    kernel_error_events: values.get('kernel_error_events') ?? 0
+  };
 }
 
 function parseProcessMetrics(raw: string): ProcessMetric[] {
@@ -300,8 +352,9 @@ export async function collectSnapshot(
       swap_used_mb: Number.parseInt(swapParts[0] ?? '0', 10),
       swap_total_mb: Number.parseInt(swapParts[1] ?? '0', 10)
     },
-    disk: parseDiskMetrics(raw.disk),
+    disk: parseDiskMetrics(raw.disk, raw.diskInodes),
     network: parseNetworkMetrics(raw.network),
+    system: parseSystemMetrics(raw.system ?? ''),
     processes: parseProcessMetrics(raw.processes),
     os: {
       kernel: osLines[0] ?? '',

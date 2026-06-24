@@ -195,7 +195,8 @@ export function createToolDefinitions(
             memory: snapshot.memory,
             disk: snapshot.disk,
             top_processes: input.include_processes ? snapshot.processes.slice(0, 5) : [],
-            network: input.include_network ? snapshot.network : []
+            network: input.include_network ? snapshot.network : [],
+            system: snapshot.system
           },
           warnings: snapshot.warnings
         });

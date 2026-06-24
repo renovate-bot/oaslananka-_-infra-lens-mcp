@@ -10,7 +10,8 @@ export {
   InspectCapabilitiesOutputSchema,
   MetricNameSchema,
   SafeConnectionSchema,
-  SnapshotSchema
+  SnapshotSchema,
+  SystemMetricSchema
 } from './types.js';
 export {
   createToolDefinitions,
@@ -59,6 +60,7 @@ export type {
   NetworkMetric,
   ProcessMetric,
   RuntimeProfile,
+  SystemMetric,
   SnapshotInput,
   StoredSnapshotRow
 } from './types.js';

@@ -30,6 +30,7 @@ const baseSnapshot: MetricSnapshot = {
   },
   disk: [{ filesystem: '/dev/sda1', mount: '/', total_gb: 100, used_gb: 50, usage_percent: 50 }],
   network: [{ interface: 'eth0', rx_bytes: 123, tx_bytes: 456 }],
+  system: { failed_units: 0, kernel_error_events: 0 },
   processes: [{ pid: 100, name: 'node', cpu_percent: 12, mem_percent: 5, command: 'node api.js' }],
   os: {
     hostname: 'app-01.internal',

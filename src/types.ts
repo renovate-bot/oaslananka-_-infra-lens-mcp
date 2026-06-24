@@ -80,13 +80,27 @@ export const DiskMetricSchema = z.object({
   mount: z.string(),
   total_gb: z.number(),
   used_gb: z.number(),
-  usage_percent: z.number()
+  usage_percent: z.number(),
+  inode_total: z.number().optional(),
+  inode_used: z.number().optional(),
+  inode_usage_percent: z.number().optional()
 });
 
 export const NetworkMetricSchema = z.object({
   interface: z.string(),
   rx_bytes: z.number(),
-  tx_bytes: z.number()
+  tx_bytes: z.number(),
+  rx_packets: z.number().optional(),
+  tx_packets: z.number().optional(),
+  rx_errors: z.number().optional(),
+  tx_errors: z.number().optional(),
+  rx_dropped: z.number().optional(),
+  tx_dropped: z.number().optional()
+});
+
+export const SystemMetricSchema = z.object({
+  failed_units: z.number().int().min(0),
+  kernel_error_events: z.number().int().min(0)
 });
 
 export const ProcessMetricSchema = z.object({
@@ -144,7 +158,8 @@ export const AnalyzeOutputSchema = z.object({
     memory: MemoryMetricSchema,
     disk: z.array(DiskMetricSchema),
     top_processes: z.array(ProcessMetricSchema),
-    network: z.array(NetworkMetricSchema)
+    network: z.array(NetworkMetricSchema),
+    system: SystemMetricSchema
   }),
   warnings: z.array(z.string())
 });
@@ -242,12 +257,26 @@ export interface DiskMetric {
   total_gb: number;
   used_gb: number;
   usage_percent: number;
+  inode_total?: number;
+  inode_used?: number;
+  inode_usage_percent?: number;
 }
 
 export interface NetworkMetric {
   interface: string;
   rx_bytes: number;
   tx_bytes: number;
+  rx_packets?: number;
+  tx_packets?: number;
+  rx_errors?: number;
+  tx_errors?: number;
+  rx_dropped?: number;
+  tx_dropped?: number;
+}
+
+export interface SystemMetric {
+  failed_units: number;
+  kernel_error_events: number;
 }
 
 export interface ProcessMetric {
@@ -278,6 +307,7 @@ export interface MetricSnapshot {
   };
   disk: DiskMetric[];
   network: NetworkMetric[];
+  system: SystemMetric;
   processes: ProcessMetric[];
   os: {
     hostname: string;

@@ -6,7 +6,7 @@
 
 # Interface: CollectorRunner
 
-Defined in: [collector.ts:25](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L25)
+Defined in: [collector.ts:28](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L28)
 
 Pluggable collector runner used by tests and SSH-backed collection.
 
@@ -16,7 +16,7 @@ Pluggable collector runner used by tests and SSH-backed collection.
 
 > **run**(`connection`, `options`): `Promise`\<[`RawMetricOutput`](RawMetricOutput.md)\>
 
-Defined in: [collector.ts:26](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L26)
+Defined in: [collector.ts:29](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L29)
 
 #### Parameters
 
@@ -68,7 +68,7 @@ Defined in: [collector.ts:26](https://github.com/oaslananka/infra-lens-mcp/blob/
 
 > `optional` **inspectCapabilities**(`connection`): `Promise`\<[`HostCapability`](HostCapability.md)[]\>
 
-Defined in: [collector.ts:27](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L27)
+Defined in: [collector.ts:30](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L30)
 
 #### Parameters
 

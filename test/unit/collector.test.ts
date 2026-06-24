@@ -214,4 +214,34 @@ describe('collectSnapshot', () => {
     expect(snapshot.disk[0]?.usage_percent).toBe(60);
     expect(snapshot.processes[0]?.command).toBe('node api.js');
   });
+
+  it('parses inode, network quality, and system health signals', async () => {
+    const snapshot = await collectSnapshot(connection, {
+      run: async () => ({
+        cpu: '10\n0.10 0.10 0.10 0/0 0\n4',
+        memory: '4096 1024 3072\n0 0',
+        disk: '/dev/sda1 / 100 40 40',
+        diskInodes: '/dev/sda1 / 100000 95000 95',
+        network: 'eth0 1000 2000 10 20 1 2 3 4',
+        system: 'failed_units 2\nkernel_error_events 5',
+        processes: '',
+        os: '6.8.0\nserver.example.com\nUbuntu 24.04.1 LTS\n86400'
+      })
+    });
+
+    expect(snapshot.disk[0]).toMatchObject({
+      inode_total: 100000,
+      inode_used: 95000,
+      inode_usage_percent: 95
+    });
+    expect(snapshot.network[0]).toMatchObject({
+      rx_packets: 10,
+      tx_packets: 20,
+      rx_errors: 1,
+      tx_errors: 2,
+      rx_dropped: 3,
+      tx_dropped: 4
+    });
+    expect(snapshot.system).toEqual({ failed_units: 2, kernel_error_events: 5 });
+  });
 });

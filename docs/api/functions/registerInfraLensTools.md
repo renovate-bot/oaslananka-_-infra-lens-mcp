@@ -8,7 +8,7 @@
 
 > **registerInfraLensTools**(`registrar`, `dependencies?`, `options?`): `void`
 
-Defined in: [server-core.ts:324](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L324)
+Defined in: [server-core.ts:325](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/server-core.ts#L325)
 
 ## Parameters
 

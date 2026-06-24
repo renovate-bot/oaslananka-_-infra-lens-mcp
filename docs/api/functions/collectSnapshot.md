@@ -8,7 +8,7 @@
 
 > **collectSnapshot**(`connection`, `runner?`, `options?`): `Promise`\<[`MetricSnapshot`](../interfaces/MetricSnapshot.md)\>
 
-Defined in: [collector.ts:276](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L276)
+Defined in: [collector.ts:328](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/collector.ts#L328)
 
 ## Parameters
 

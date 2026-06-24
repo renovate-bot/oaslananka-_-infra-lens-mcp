@@ -24,6 +24,7 @@ const makeSnapshot = (overrides: Partial<MetricSnapshot> = {}): MetricSnapshot =
   },
   disk: [{ filesystem: '/dev/sda1', mount: '/', total_gb: 50, used_gb: 10, usage_percent: 20 }],
   network: [{ interface: 'eth0', rx_bytes: 1000, tx_bytes: 500 }],
+  system: { failed_units: 0, kernel_error_events: 0 },
   processes: [{ pid: 100, name: 'nginx', cpu_percent: 2, mem_percent: 1, command: 'nginx' }],
   os: { hostname: 'test', uptime_seconds: 86400, kernel: '5.15', distro: 'Ubuntu 22.04' },
   ...overrides
@@ -151,5 +152,49 @@ describe('analyzeSnapshot', () => {
       false
     );
     expect(customResult.anomalies.some((anomaly: Anomaly) => anomaly.metric === 'cpu')).toBe(true);
+  });
+
+  it('detects inode, network, and system health pressure', () => {
+    const result = analyzeSnapshot(
+      makeSnapshot({
+        disk: [
+          {
+            filesystem: '/dev/sda1',
+            mount: '/',
+            total_gb: 50,
+            used_gb: 10,
+            usage_percent: 20,
+            inode_total: 100000,
+            inode_used: 94000,
+            inode_usage_percent: 94
+          }
+        ],
+        network: [
+          {
+            interface: 'eth0',
+            rx_bytes: 1000,
+            tx_bytes: 2000,
+            rx_errors: 2,
+            tx_errors: 3,
+            rx_dropped: 4,
+            tx_dropped: 5
+          }
+        ],
+        system: { failed_units: 2, kernel_error_events: 1 }
+      })
+    );
+
+    expect(result.anomalies.some((anomaly: Anomaly) => anomaly.metric === 'disk_inode:/')).toBe(
+      true
+    );
+    expect(result.anomalies.some((anomaly: Anomaly) => anomaly.metric === 'network:eth0')).toBe(
+      true
+    );
+    expect(
+      result.anomalies.some((anomaly: Anomaly) => anomaly.metric === 'system:failed_units')
+    ).toBe(true);
+    expect(
+      result.anomalies.some((anomaly: Anomaly) => anomaly.metric === 'system:kernel_errors')
+    ).toBe(true);
   });
 });

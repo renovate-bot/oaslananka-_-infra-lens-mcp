@@ -28,6 +28,7 @@ export function analyzeSnapshot(
 } {
   const baseline = getBaseline(snapshot.host, baselineLabel);
   const anomalies: Anomaly[] = [];
+  const system = snapshot.system ?? { failed_units: 0, kernel_error_events: 0 };
   const memoryHighPercent =
     thresholds.memory_warn_percent +
     (thresholds.memory_critical_percent - thresholds.memory_warn_percent) / 2;
@@ -103,26 +104,81 @@ export function analyzeSnapshot(
   }
 
   for (const disk of snapshot.disk) {
-    if (disk.usage_percent > thresholds.disk_warn_percent) {
+    const storageUsage = Math.max(disk.usage_percent, disk.inode_usage_percent ?? 0);
+    const pressureKind =
+      disk.inode_usage_percent !== undefined && disk.inode_usage_percent > disk.usage_percent
+        ? 'inode'
+        : 'space';
+    if (storageUsage > thresholds.disk_warn_percent) {
       anomalies.push({
-        metric: `disk:${disk.mount}`,
+        metric: `${pressureKind === 'inode' ? 'disk_inode' : 'disk'}:${disk.mount}`,
         severity:
-          disk.usage_percent >= thresholds.disk_critical_percent
+          storageUsage >= thresholds.disk_critical_percent
             ? 'critical'
             : disk.usage_percent >=
                 thresholds.disk_warn_percent +
                   (thresholds.disk_critical_percent - thresholds.disk_warn_percent) / 2
               ? 'high'
               : 'medium',
-        value: disk.usage_percent,
+        value: storageUsage,
         baseline_mean: 0,
-        explanation: `Disk ${disk.mount} is ${disk.usage_percent}% full (${disk.used_gb}GB/${disk.total_gb}GB).`,
+        explanation:
+          pressureKind === 'inode'
+            ? `Disk ${disk.mount} inode usage is ${disk.inode_usage_percent}% (${disk.inode_used ?? 0}/${disk.inode_total ?? 0} inodes). Space usage is ${disk.usage_percent}%.`
+            : `Disk ${disk.mount} is ${disk.usage_percent}% full (${disk.used_gb}GB/${disk.total_gb}GB).`,
         recommendation:
-          disk.usage_percent > 90
-            ? `Run du -sh ${disk.mount}/* | sort -rh | head -20 and clean logs or temporary files on ${disk.mount}.`
-            : `Plan capacity cleanup soon before ${disk.mount} becomes critical.`
+          pressureKind === 'inode'
+            ? `Find directories with many small files on ${disk.mount} and clean cache, temp, or spool files before inode exhaustion blocks writes.`
+            : storageUsage > 90
+              ? `Run du -sh ${disk.mount}/* | sort -rh | head -20 and clean logs or temporary files on ${disk.mount}.`
+              : `Plan capacity cleanup soon before ${disk.mount} becomes critical.`
       });
     }
+  }
+
+  for (const network of snapshot.network) {
+    const errorCount =
+      (network.rx_errors ?? 0) +
+      (network.tx_errors ?? 0) +
+      (network.rx_dropped ?? 0) +
+      (network.tx_dropped ?? 0);
+    if (errorCount > 0) {
+      anomalies.push({
+        metric: `network:${network.interface}`,
+        severity: errorCount >= 100 ? 'high' : errorCount >= 10 ? 'medium' : 'low',
+        value: errorCount,
+        baseline_mean: 0,
+        explanation: `Interface ${network.interface} reports ${errorCount} packet errors or drops. RX/TX bytes are ${network.rx_bytes}/${network.tx_bytes}.`,
+        recommendation:
+          errorCount >= 100
+            ? 'Inspect NIC, driver, MTU, duplex, and upstream switch counters immediately.'
+            : 'Watch the interface counters and compare them with application latency or packet loss symptoms.'
+      });
+    }
+  }
+
+  if (system.failed_units > 0) {
+    anomalies.push({
+      metric: 'system:failed_units',
+      severity: system.failed_units >= 3 ? 'high' : 'medium',
+      value: system.failed_units,
+      baseline_mean: 0,
+      explanation: `${system.failed_units} systemd unit${system.failed_units === 1 ? '' : 's'} are failed.`,
+      recommendation:
+        'Run systemctl --failed and inspect the affected unit logs before restarting services.'
+    });
+  }
+
+  if (system.kernel_error_events > 0) {
+    anomalies.push({
+      metric: 'system:kernel_errors',
+      severity: system.kernel_error_events >= 5 ? 'high' : 'medium',
+      value: system.kernel_error_events,
+      baseline_mean: 0,
+      explanation: `${system.kernel_error_events} recent kernel error event${system.kernel_error_events === 1 ? '' : 's'} were found.`,
+      recommendation:
+        'Review dmesg for storage, network, OOM, or hardware errors that explain the symptom.'
+    });
   }
 
   const normalizedLoad =
@@ -160,7 +216,7 @@ export function analyzeSnapshot(
 
   const summary =
     anomalies.length === 0
-      ? `Server ${snapshot.host} looks healthy. CPU is ${snapshot.cpu.usage_percent}%, memory is ${snapshot.memory.usage_percent}%, and disk usage is within expected thresholds.`
+      ? `Server ${snapshot.host} looks healthy. CPU is ${snapshot.cpu.usage_percent}%, memory is ${snapshot.memory.usage_percent}%, disk usage is within expected thresholds, and system health signals are quiet.`
       : `Found ${anomalies.length} anomaly${anomalies.length === 1 ? '' : 'ies'} on ${snapshot.host}. Most urgent signal: ${anomalies[0]?.explanation ?? 'n/a'}`;
 
   return { anomalies, summary, health_score };
