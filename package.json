@@ -62,12 +62,13 @@
     "check:metadata": "node scripts/check-metadata.mjs",
     "check:licenses": "node scripts/check-licenses.mjs",
     "docs:api": "typedoc --options typedoc.json",
-    "docs:api:check": "pnpm run docs:api && node scripts/check-api-docs.mjs",
+    "docs:api:check": "pnpm run docs:api && node scripts/check-api-docs.mjs && node scripts/check-doc-links.mjs",
     "sbom": "node scripts/generate-sbom.mjs",
     "package:dry-run": "pnpm run build && npm pack --dry-run",
     "release:dry-run": "node scripts/release-state.mjs --dry-run",
     "prepare": "pnpm run build",
-    "test:e2e:raw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --testPathPatterns=e2e"
+    "test:e2e:raw": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --testPathPatterns=e2e",
+    "docs:links:check": "node scripts/check-doc-links.mjs"
   },
   "engines": {
     "node": ">=22"

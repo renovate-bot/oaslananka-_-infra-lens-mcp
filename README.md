@@ -20,6 +20,8 @@ Explain Linux incidents over SSH with baseline-aware MCP tooling.
 
 ![infra-lens-mcp demo](docs/demo.gif)
 
+See the [MCP 2025-11-25 compliance matrix](./docs/compliance/mcp-2025-11-25.md) for the current protocol support, delegated behavior, and open follow-up issues.
+
 ## Tools
 
 | Tool | Purpose |
