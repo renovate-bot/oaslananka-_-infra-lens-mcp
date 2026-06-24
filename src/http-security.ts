@@ -17,6 +17,9 @@ export interface HttpConfig {
   authorizationServers: string[];
   resourceUrl?: string;
   endpointPath: string;
+  requestTimeoutMs: number;
+  maxConcurrentRequests: number;
+  rateLimitPerMinute: number;
 }
 
 export interface HttpDecision {
@@ -27,6 +30,8 @@ export interface HttpDecision {
 }
 
 const DEFAULT_BODY_LIMIT_BYTES = 1024 * 1024;
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_MAX_CONCURRENT_REQUESTS = 100;
 const SUPPORTED_HTTP_PROTOCOL_VERSIONS = new Set(['2025-11-25', '2025-06-18', '2025-03-26']);
 
 function parseCsv(value: string | undefined): string[] {
@@ -85,7 +90,13 @@ export function parseHttpConfig(env: Record<string, string | undefined>): HttpCo
     bodyLimitBytes: parseInteger(env.MCP_HTTP_BODY_LIMIT_BYTES, DEFAULT_BODY_LIMIT_BYTES),
     authorizationServers: parseCsv(env.MCP_HTTP_AUTHORIZATION_SERVERS),
     resourceUrl: env.MCP_HTTP_RESOURCE_URL,
-    endpointPath: normalizeEndpointPath(env.MCP_HTTP_ENDPOINT_PATH)
+    endpointPath: normalizeEndpointPath(env.MCP_HTTP_ENDPOINT_PATH),
+    requestTimeoutMs: parseInteger(env.MCP_HTTP_REQUEST_TIMEOUT_MS, DEFAULT_REQUEST_TIMEOUT_MS),
+    maxConcurrentRequests: parseInteger(
+      env.MCP_HTTP_MAX_CONCURRENT_REQUESTS,
+      DEFAULT_MAX_CONCURRENT_REQUESTS
+    ),
+    rateLimitPerMinute: parseInteger(env.MCP_HTTP_RATE_LIMIT_PER_MINUTE, 0)
   };
 }
 
@@ -135,6 +146,73 @@ export function validateHttpConfiguration(config: HttpConfig): void {
   if (config.allowedHosts.length === 0) {
     throw new Error('Non-loopback HTTP requires MCP_HTTP_ALLOWED_HOSTS.');
   }
+}
+
+export interface ConcurrencyLimiter {
+  tryAcquire(): boolean;
+  release(): void;
+  active(): number;
+}
+
+export function createConcurrencyLimiter(maxConcurrentRequests: number): ConcurrencyLimiter {
+  let activeRequests = 0;
+
+  return {
+    tryAcquire() {
+      if (activeRequests >= maxConcurrentRequests) {
+        return false;
+      }
+
+      activeRequests += 1;
+      return true;
+    },
+    release() {
+      activeRequests = Math.max(0, activeRequests - 1);
+    },
+    active() {
+      return activeRequests;
+    }
+  };
+}
+
+export interface RateLimiter {
+  check(clientKey: string): HttpDecision;
+}
+
+export function createRateLimiter(
+  requestsPerMinute: number,
+  now: () => number = () => Date.now()
+): RateLimiter {
+  const windows = new Map<string, { windowStart: number; count: number }>();
+
+  return {
+    check(clientKey: string) {
+      if (requestsPerMinute <= 0) {
+        return { ok: true };
+      }
+
+      const currentWindow = Math.floor(now() / 60_000);
+      const existing = windows.get(clientKey);
+      const entry =
+        existing && existing.windowStart === currentWindow
+          ? existing
+          : { windowStart: currentWindow, count: 0 };
+
+      entry.count += 1;
+      windows.set(clientKey, entry);
+
+      if (entry.count > requestsPerMinute) {
+        return {
+          ok: false,
+          statusCode: 429,
+          message: 'Too many requests.',
+          headers: { 'Retry-After': '60' }
+        };
+      }
+
+      return { ok: true };
+    }
+  };
 }
 
 export function validateOriginHeader(origin: string | undefined, config: HttpConfig): HttpDecision {
@@ -394,5 +472,7 @@ export function sendJsonError(
     response.setHeader(key, value);
   }
   response.setHeader('content-type', 'application/json');
+  response.setHeader('x-content-type-options', 'nosniff');
+  response.setHeader('cache-control', 'no-store');
   response.end(JSON.stringify({ error: message }));
 }

@@ -5,7 +5,9 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 
 import {
   authorizeHttpRequest,
+  createConcurrencyLimiter,
   createProtectedResourceMetadata,
+  createRateLimiter,
   parseHttpConfig,
   readJsonBodyWithLimit,
   sendJsonError,
@@ -46,10 +48,34 @@ async function createHttpTransport() {
 const httpConfig = parseHttpConfig(process.env);
 validateHttpConfiguration(httpConfig);
 const transport = await createHttpTransport();
+const concurrencyLimiter = createConcurrencyLimiter(httpConfig.maxConcurrentRequests);
+const rateLimiter = createRateLimiter(httpConfig.rateLimitPerMinute);
 
 const httpServer = createServer((request, response) => {
+  request.setTimeout(httpConfig.requestTimeoutMs, () => {
+    request.destroy(new Error('HTTP request timed out.'));
+  });
+
   void (async () => {
+    let acquiredConcurrencySlot = false;
+
     try {
+      if (!concurrencyLimiter.tryAcquire()) {
+        sendJsonError(response, 503, 'Too many concurrent requests.', { 'Retry-After': '1' });
+        return;
+      }
+      acquiredConcurrencySlot = true;
+
+      const rateDecision = rateLimiter.check(request.socket.remoteAddress ?? 'unknown');
+      if (!rateDecision.ok) {
+        sendJsonError(
+          response,
+          rateDecision.statusCode ?? 429,
+          rateDecision.message ?? 'Too many requests.',
+          rateDecision.headers
+        );
+        return;
+      }
       if (request.url?.startsWith('/.well-known/oauth-protected-resource')) {
         response.statusCode = 200;
         response.setHeader('content-type', 'application/json');
@@ -110,14 +136,20 @@ const httpServer = createServer((request, response) => {
       const message = error instanceof Error ? error.message : 'Unexpected server error';
       const statusCode = message.includes('too large')
         ? 413
-        : message.includes('valid JSON')
-          ? 400
-          : 500;
+        : message.includes('timed out')
+          ? 408
+          : message.includes('valid JSON')
+            ? 400
+            : 500;
       sendJsonError(
         response,
         statusCode,
         statusCode === 500 ? 'Unexpected server error.' : message
       );
+    } finally {
+      if (acquiredConcurrencySlot) {
+        concurrencyLimiter.release();
+      }
     }
   })();
 });

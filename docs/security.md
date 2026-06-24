@@ -27,12 +27,19 @@ HTTP defaults to loopback. Non-loopback binds fail unless a remote-safe profile,
 
 The HTTP policy layer rejects:
 
+- unsupported endpoint paths and HTTP methods before body parsing
+- client-provided `MCP-Session-Id` values because HTTP mode is stateless today
 - missing or invalid `Origin` when origin enforcement is configured
 - missing or invalid `Host` when host enforcement is configured
 - missing or invalid bearer auth when bearer mode is configured
-- oversized JSON bodies
+- oversized or non-JSON request bodies
+- requests over the configured timeout
+- requests above the Node process concurrency limit
+- requests above the optional per-client in-memory rate limit
 
-Errors are returned as sanitized JSON without stack traces.
+Errors are returned as sanitized JSON without stack traces and include `X-Content-Type-Options: nosniff` and `Cache-Control: no-store`.
+
+When deploying behind a reverse proxy or OAuth gateway, keep the Node process on a private network path, forward only the canonical MCP endpoint, and treat proxy-side limits as an outer layer rather than a replacement for the in-process timeout, concurrency, body-size, origin, and host checks.
 
 ## MCP connector readiness
 

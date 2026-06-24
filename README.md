@@ -92,6 +92,9 @@ node dist/mcp.js
 | `MCP_HTTP_OAUTH_GATEWAY_HEADER` | `x-infra-lens-gateway-auth` | Header injected by a trusted OAuth gateway |
 | `MCP_HTTP_OAUTH_GATEWAY_SECRET` | unset | Shared backend secret required for `oauth-gateway` mode |
 | `MCP_HTTP_BODY_LIMIT_BYTES` | `1048576` | Maximum JSON request body size |
+| `MCP_HTTP_REQUEST_TIMEOUT_MS` | `30000` | Maximum time to receive and handle an HTTP request before the socket is closed |
+| `MCP_HTTP_MAX_CONCURRENT_REQUESTS` | `100` | Maximum concurrent HTTP requests accepted by the Node process |
+| `MCP_HTTP_RATE_LIMIT_PER_MINUTE` | `0` | Optional per-client in-memory rate limit; `0` disables it |
 | `MCP_HTTP_AUTHORIZATION_SERVERS` | unset | OAuth authorization server metadata URLs |
 | `MCP_PROFILE` | `full` | `full`, `remote-safe`, `chatgpt`, or `claude` |
 | `MCP_SSH_STRICT_HOST_CHECKING` | `true` | Strict host key verification toggle |
@@ -127,7 +130,7 @@ Loopback HTTP can run without auth for local development. Any non-loopback bind,
 - `MCP_HTTP_ALLOWED_ORIGINS`
 - `MCP_HTTP_ALLOWED_HOSTS`
 
-Native OAuth/JWT validation is not implemented inside this package. Public deployments should use `MCP_HTTP_AUTH_MODE=oauth-gateway` behind a production OAuth-aware gateway or reverse proxy, configure HTTPS `MCP_HTTP_RESOURCE_URL`, and block direct access to the Node process. See [ADR 0006](./docs/adr/0006-oauth-gateway-strategy.md). Connector publication readiness remains false until a full connector deployment is verified.
+Native OAuth/JWT validation is not implemented inside this package. Public deployments should use `MCP_HTTP_AUTH_MODE=oauth-gateway` behind a production OAuth-aware gateway or reverse proxy, configure HTTPS `MCP_HTTP_RESOURCE_URL`, and block direct access to the Node process. Keep origin/host allowlists, body limits, request timeout, concurrency limit, and optional rate limit enabled at the Node process even when an upstream proxy also enforces them. See [ADR 0006](./docs/adr/0006-oauth-gateway-strategy.md). Connector publication readiness remains false until a full connector deployment is verified.
 
 ## Docker
 

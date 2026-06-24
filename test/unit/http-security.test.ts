@@ -3,6 +3,8 @@ import { Readable } from 'node:stream';
 
 import {
   authorizeHttpRequest,
+  createConcurrencyLimiter,
+  createRateLimiter,
   parseHttpConfig,
   readJsonBodyWithLimit,
   sendJsonError,
@@ -16,6 +18,26 @@ describe('HTTP security configuration', () => {
   it('parses the canonical MCP endpoint path with a /mcp default', () => {
     expect(parseHttpConfig({}).endpointPath).toBe('/mcp');
     expect(parseHttpConfig({ MCP_HTTP_ENDPOINT_PATH: 'custom/' }).endpointPath).toBe('/custom');
+  });
+
+  it('parses request hardening defaults and environment overrides', () => {
+    expect(parseHttpConfig({})).toMatchObject({
+      requestTimeoutMs: 30_000,
+      maxConcurrentRequests: 100,
+      rateLimitPerMinute: 0
+    });
+
+    expect(
+      parseHttpConfig({
+        MCP_HTTP_REQUEST_TIMEOUT_MS: '5000',
+        MCP_HTTP_MAX_CONCURRENT_REQUESTS: '2',
+        MCP_HTTP_RATE_LIMIT_PER_MINUTE: '10'
+      })
+    ).toMatchObject({
+      requestTimeoutMs: 5000,
+      maxConcurrentRequests: 2,
+      rateLimitPerMinute: 10
+    });
   });
 
   it('accepts POST requests to the canonical MCP endpoint with required headers', () => {
@@ -287,6 +309,37 @@ describe('HTTP security configuration', () => {
     ).toEqual({ ok: true });
   });
 
+  it('limits concurrent HTTP request handling before body processing', () => {
+    const limiter = createConcurrencyLimiter(1);
+
+    expect(limiter.tryAcquire()).toBe(true);
+    expect(limiter.active()).toBe(1);
+    expect(limiter.tryAcquire()).toBe(false);
+
+    limiter.release();
+
+    expect(limiter.active()).toBe(0);
+    expect(limiter.tryAcquire()).toBe(true);
+  });
+
+  it('optionally rate-limits requests per client window', () => {
+    let now = 0;
+    const limiter = createRateLimiter(2, () => now);
+
+    expect(limiter.check('client-a')).toEqual({ ok: true });
+    expect(limiter.check('client-a')).toEqual({ ok: true });
+    expect(limiter.check('client-a')).toMatchObject({
+      ok: false,
+      statusCode: 429,
+      headers: { 'Retry-After': '60' }
+    });
+
+    now = 60_000;
+
+    expect(limiter.check('client-a')).toEqual({ ok: true });
+    expect(limiter.check('client-b')).toEqual({ ok: true });
+  });
+
   it('rejects oversized JSON bodies before parsing', async () => {
     const request = Readable.from([Buffer.from('{"payload":"too large"}')]);
 
@@ -311,6 +364,8 @@ describe('HTTP security configuration', () => {
     sendJsonError(response as never, 500, 'Unexpected server error.');
 
     expect(response.statusCode).toBe(500);
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['cache-control']).toBe('no-store');
     expect(response.body).toBe('{"error":"Unexpected server error."}');
     expect(response.body).not.toContain('stack');
   });
