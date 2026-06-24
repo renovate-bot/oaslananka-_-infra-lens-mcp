@@ -1,4 +1,4 @@
-import type { IncomingMessage, ServerResponse } from 'node:http';
+import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http';
 
 type HttpAuthMode = 'none' | 'bearer' | 'oauth';
 type HttpProfile = 'full' | 'remote-safe' | 'chatgpt' | 'claude';
@@ -14,6 +14,7 @@ export interface HttpConfig {
   bodyLimitBytes: number;
   authorizationServers: string[];
   resourceUrl?: string;
+  endpointPath: string;
 }
 
 export interface HttpDecision {
@@ -24,6 +25,7 @@ export interface HttpDecision {
 }
 
 const DEFAULT_BODY_LIMIT_BYTES = 1024 * 1024;
+const SUPPORTED_HTTP_PROTOCOL_VERSIONS = new Set(['2025-11-25', '2025-06-18', '2025-03-26']);
 
 function parseCsv(value: string | undefined): string[] {
   return (value ?? '')
@@ -39,6 +41,16 @@ function parseInteger(value: string | undefined, defaultValue: number): number {
 
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultValue;
+}
+
+function normalizeEndpointPath(value: string | undefined): string {
+  const trimmed = (value ?? '/mcp').trim();
+  if (!trimmed || trimmed === '/') {
+    return '/mcp';
+  }
+
+  const withLeadingSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return withLeadingSlash.replace(/\/+$/, '') || '/mcp';
 }
 
 function parseAuthMode(value: string | undefined): HttpAuthMode {
@@ -60,7 +72,8 @@ export function parseHttpConfig(env: Record<string, string | undefined>): HttpCo
     bearerToken: env.MCP_HTTP_BEARER_TOKEN,
     bodyLimitBytes: parseInteger(env.MCP_HTTP_BODY_LIMIT_BYTES, DEFAULT_BODY_LIMIT_BYTES),
     authorizationServers: parseCsv(env.MCP_HTTP_AUTHORIZATION_SERVERS),
-    resourceUrl: env.MCP_HTTP_RESOURCE_URL
+    resourceUrl: env.MCP_HTTP_RESOURCE_URL,
+    endpointPath: normalizeEndpointPath(env.MCP_HTTP_ENDPOINT_PATH)
   };
 }
 
@@ -190,6 +203,88 @@ export function authorizeHttpRequest(
     message: 'OAuth validation is not implemented by this server.',
     headers: { 'WWW-Authenticate': wwwAuthenticateHeader(config) }
   };
+}
+
+function headerIncludes(headers: IncomingHttpHeaders, name: string, expected: string): boolean {
+  const value = headers[name.toLowerCase()];
+  const values = Array.isArray(value) ? value : [value];
+  return values
+    .filter((entry): entry is string => typeof entry === 'string')
+    .flatMap((entry) => entry.split(','))
+    .map((entry) => entry.trim().toLowerCase())
+    .includes(expected.toLowerCase());
+}
+
+function firstHeader(headers: IncomingHttpHeaders, name: string): string | undefined {
+  const value = headers[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function requestPath(url: string | undefined): string {
+  try {
+    return new URL(url ?? '/', 'http://localhost').pathname;
+  } catch {
+    return '/';
+  }
+}
+
+export function validateMcpHttpRequest(
+  request: Pick<IncomingMessage, 'method' | 'url'> & { headers: IncomingHttpHeaders },
+  config: HttpConfig
+): HttpDecision {
+  if (requestPath(request.url) !== config.endpointPath) {
+    return { ok: false, statusCode: 404, message: 'MCP endpoint was not found.' };
+  }
+
+  const method = request.method ?? 'GET';
+  if (method === 'GET') {
+    return {
+      ok: false,
+      statusCode: 405,
+      message: 'HTTP GET streaming is not supported by this server.',
+      headers: { Allow: 'POST' }
+    };
+  }
+
+  if (method !== 'POST') {
+    return {
+      ok: false,
+      statusCode: 405,
+      message: 'HTTP method is not allowed for the MCP endpoint.',
+      headers: { Allow: 'POST' }
+    };
+  }
+
+  if (
+    !headerIncludes(request.headers, 'accept', 'application/json') ||
+    !headerIncludes(request.headers, 'accept', 'text/event-stream')
+  ) {
+    return {
+      ok: false,
+      statusCode: 406,
+      message: 'Accept header must include application/json and text/event-stream.'
+    };
+  }
+
+  const contentType = firstHeader(request.headers, 'content-type');
+  if (!contentType || !contentType.toLowerCase().split(';')[0]?.trim().endsWith('/json')) {
+    return {
+      ok: false,
+      statusCode: 415,
+      message: 'Content-Type must be application/json.'
+    };
+  }
+
+  const protocolVersion = firstHeader(request.headers, 'mcp-protocol-version');
+  if (protocolVersion && !SUPPORTED_HTTP_PROTOCOL_VERSIONS.has(protocolVersion)) {
+    return {
+      ok: false,
+      statusCode: 400,
+      message: 'MCP-Protocol-Version is not supported.'
+    };
+  }
+
+  return { ok: true };
 }
 
 export function createProtectedResourceMetadata(config: HttpConfig): Record<string, unknown> {

@@ -8,10 +8,107 @@ import {
   sendJsonError,
   validateHostHeader,
   validateHttpConfiguration,
+  validateMcpHttpRequest,
   validateOriginHeader
 } from '../../src/http-security.js';
 
 describe('HTTP security configuration', () => {
+  it('parses the canonical MCP endpoint path with a /mcp default', () => {
+    expect(parseHttpConfig({}).endpointPath).toBe('/mcp');
+    expect(parseHttpConfig({ MCP_HTTP_ENDPOINT_PATH: 'custom/' }).endpointPath).toBe('/custom');
+  });
+
+  it('accepts POST requests to the canonical MCP endpoint with required headers', () => {
+    const config = parseHttpConfig({});
+
+    expect(
+      validateMcpHttpRequest(
+        {
+          method: 'POST',
+          url: '/mcp',
+          headers: {
+            accept: 'application/json, text/event-stream',
+            'content-type': 'application/json',
+            'mcp-protocol-version': '2025-11-25'
+          }
+        },
+        config
+      )
+    ).toEqual({ ok: true });
+  });
+
+  it('rejects wrong HTTP paths before body parsing', () => {
+    expect(
+      validateMcpHttpRequest(
+        {
+          method: 'POST',
+          url: '/wrong',
+          headers: {
+            accept: 'application/json, text/event-stream',
+            'content-type': 'application/json'
+          }
+        },
+        parseHttpConfig({})
+      )
+    ).toMatchObject({ ok: false, statusCode: 404 });
+  });
+
+  it('returns 405 for unsupported MCP endpoint methods including GET', () => {
+    const config = parseHttpConfig({});
+
+    expect(
+      validateMcpHttpRequest({ method: 'GET', url: '/mcp', headers: {} }, config)
+    ).toMatchObject({
+      ok: false,
+      statusCode: 405,
+      headers: { Allow: 'POST' }
+    });
+    expect(
+      validateMcpHttpRequest({ method: 'DELETE', url: '/mcp', headers: {} }, config)
+    ).toMatchObject({
+      ok: false,
+      statusCode: 405,
+      headers: { Allow: 'POST' }
+    });
+  });
+
+  it('rejects missing Accept and invalid Content-Type for POST', () => {
+    const config = parseHttpConfig({});
+
+    expect(
+      validateMcpHttpRequest(
+        { method: 'POST', url: '/mcp', headers: { 'content-type': 'application/json' } },
+        config
+      )
+    ).toMatchObject({ ok: false, statusCode: 406 });
+    expect(
+      validateMcpHttpRequest(
+        {
+          method: 'POST',
+          url: '/mcp',
+          headers: { accept: 'application/json, text/event-stream', 'content-type': 'text/plain' }
+        },
+        config
+      )
+    ).toMatchObject({ ok: false, statusCode: 415 });
+  });
+
+  it('rejects unsupported MCP protocol versions', () => {
+    expect(
+      validateMcpHttpRequest(
+        {
+          method: 'POST',
+          url: '/mcp',
+          headers: {
+            accept: 'application/json, text/event-stream',
+            'content-type': 'application/json',
+            'mcp-protocol-version': '2099-01-01'
+          }
+        },
+        parseHttpConfig({})
+      )
+    ).toMatchObject({ ok: false, statusCode: 400 });
+  });
   it('allows loopback HTTP without auth for local development', () => {
     const config = parseHttpConfig({
       MCP_HTTP_HOST: '127.0.0.1',

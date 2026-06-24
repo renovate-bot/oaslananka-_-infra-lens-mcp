@@ -11,6 +11,7 @@ import {
   sendJsonError,
   validateHostHeader,
   validateHttpConfiguration,
+  validateMcpHttpRequest,
   validateOriginHeader
 } from './http-security.js';
 import { createLogger } from './logging.js';
@@ -76,6 +77,17 @@ const httpServer = createServer((request, response) => {
         return;
       }
 
+      const endpointDecision = validateMcpHttpRequest(request, httpConfig);
+      if (!endpointDecision.ok) {
+        sendJsonError(
+          response,
+          endpointDecision.statusCode ?? 400,
+          endpointDecision.message ?? 'Bad request.',
+          endpointDecision.headers
+        );
+        return;
+      }
+
       const authDecision = authorizeHttpRequest(request.headers.authorization, httpConfig);
       if (!authDecision.ok) {
         sendJsonError(
@@ -87,10 +99,7 @@ const httpServer = createServer((request, response) => {
         return;
       }
 
-      const parsedBody =
-        request.method === 'POST' || request.method === 'PUT' || request.method === 'PATCH'
-          ? await readJsonBodyWithLimit(request, httpConfig.bodyLimitBytes)
-          : undefined;
+      const parsedBody = await readJsonBodyWithLimit(request, httpConfig.bodyLimitBytes);
 
       await transport.handleRequest(request, response, parsedBody);
     } catch (error) {
@@ -111,7 +120,7 @@ const httpServer = createServer((request, response) => {
 
 httpServer.listen(httpConfig.port, httpConfig.host, () => {
   logger.info(
-    `infra-lens-mcp HTTP transport listening on http://${httpConfig.host}:${httpConfig.port}`
+    `infra-lens-mcp HTTP transport listening on http://${httpConfig.host}:${httpConfig.port}${httpConfig.endpointPath}`
   );
 });
 

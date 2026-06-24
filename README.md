@@ -82,6 +82,7 @@ node dist/mcp.js
 | `INFRA_LENS_DB` | `~/.infra-lens-mcp/metrics.db` | SQLite database path |
 | `MCP_HTTP_HOST` | `127.0.0.1` | HTTP bind host. `HOST` remains a deprecated alias |
 | `MCP_HTTP_PORT` | `3000` | HTTP bind port. `PORT` remains a deprecated alias |
+| `MCP_HTTP_ENDPOINT_PATH` | `/mcp` | Canonical Streamable HTTP MCP endpoint path |
 | `MCP_HTTP_ALLOWED_ORIGINS` | unset | Comma-separated allowed Origin values |
 | `MCP_HTTP_ALLOWED_HOSTS` | unset | Comma-separated allowed Host values |
 | `MCP_HTTP_AUTH_MODE` | `none` | `none`, `bearer`, or `oauth` |
@@ -109,7 +110,7 @@ Process command arguments are not collected by the default process command. Secr
 
 ## HTTP Transport
 
-Run the Streamable HTTP transport locally:
+Run the Streamable HTTP transport locally. The canonical MCP endpoint is `http://127.0.0.1:3000/mcp` unless `MCP_HTTP_ENDPOINT_PATH` is changed.
 
 ```bash
 MCP_TRANSPORT=http MCP_HTTP_HOST=127.0.0.1 MCP_HTTP_PORT=3000 node dist/server-http.js
