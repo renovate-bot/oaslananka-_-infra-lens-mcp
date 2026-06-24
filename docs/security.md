@@ -10,7 +10,7 @@ SSH host key verification is strict by default. A connection is accepted only wh
 
 `MCP_SSH_STRICT_HOST_CHECKING=false` exists for disposable local fixtures only and logs a warning once per process.
 
-`remote-safe`, `chatgpt`, and `claude` profiles reject raw passwords, private keys, and passphrases in tool input. These profiles also require `MCP_SSH_ALLOWED_HOSTS`.
+`full` profile is for trusted local stdio development only. `remote-safe`, `chatgpt`, and `claude` profiles are for network-facing or connector deployments; they reject inline SSH secret fields before opening a connection, require `MCP_SSH_ALLOWED_HOSTS`, and expect identities to come from an external agent, preset identity, or gateway-managed environment.
 
 ## Collector privacy
 

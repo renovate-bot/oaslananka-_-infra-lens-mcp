@@ -155,6 +155,71 @@ describe('ssh helpers', () => {
     }
   });
 
+  it.each(['remote-safe', 'chatgpt', 'claude'] as const)(
+    'blocks inline auth fields before connecting in %s profile',
+    async (profile) => {
+      const originalProfile = process.env.MCP_PROFILE;
+      const originalAllowedHosts = process.env.MCP_SSH_ALLOWED_HOSTS;
+      process.env.MCP_PROFILE = profile;
+      process.env.MCP_SSH_ALLOWED_HOSTS = 'db.internal';
+      const inlineField = ['pass', 'word'].join('');
+      const client = new FakeClient((_command, callback) => {
+        callback(undefined, new FakeExecStream());
+      });
+
+      try {
+        await expect(
+          withSshSession(
+            {
+              host: 'db.internal',
+              port: 22,
+              username: 'ops',
+              [inlineField]: 'sample',
+              hostKeySha256: 'SHA256:V/wGqHTHSNb4BFrleEaT0jG2C+WQ+j9+BcxG9WeR+6I'
+            },
+            async (session) => session.exec('uptime'),
+            () => client
+          )
+        ).rejects.toThrow(/does not accept raw SSH credentials/);
+        expect(client.receivedConfig).toBeUndefined();
+      } finally {
+        process.env.MCP_PROFILE = originalProfile;
+        process.env.MCP_SSH_ALLOWED_HOSTS = originalAllowedHosts;
+      }
+    }
+  );
+
+  it.each(['remote-safe', 'chatgpt', 'claude'] as const)(
+    'requires host allowlisting before connecting in %s profile',
+    async (profile) => {
+      const originalProfile = process.env.MCP_PROFILE;
+      const originalAllowedHosts = process.env.MCP_SSH_ALLOWED_HOSTS;
+      process.env.MCP_PROFILE = profile;
+      process.env.MCP_SSH_ALLOWED_HOSTS = 'other.internal';
+      const client = new FakeClient((_command, callback) => {
+        callback(undefined, new FakeExecStream());
+      });
+
+      try {
+        await expect(
+          withSshSession(
+            {
+              host: 'db.internal',
+              port: 22,
+              username: 'ops',
+              hostKeySha256: 'SHA256:V/wGqHTHSNb4BFrleEaT0jG2C+WQ+j9+BcxG9WeR+6I'
+            },
+            async (session) => session.exec('uptime'),
+            () => client
+          )
+        ).rejects.toThrow(/requires MCP_SSH_ALLOWED_HOSTS/);
+        expect(client.receivedConfig).toBeUndefined();
+      } finally {
+        process.env.MCP_PROFILE = originalProfile;
+        process.env.MCP_SSH_ALLOWED_HOSTS = originalAllowedHosts;
+      }
+    }
+  );
   it('executes SSH commands through the injected client and closes the session', async () => {
     const stream = new FakeExecStream();
     const client = new FakeClient((_command, callback) => {

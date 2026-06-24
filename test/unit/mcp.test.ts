@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import type { z } from 'zod';
 
 import {
   createToolDefinitions,
@@ -66,6 +67,28 @@ describe('registerInfraLensTools', () => {
     }
   });
 
+  it.each(['remote-safe', 'chatgpt', 'claude'] as const)(
+    'removes direct SSH credential fields from tool schemas in %s profile',
+    (profile) => {
+      const definitions = createToolDefinitions(undefined, { profile });
+      const analyzeSchema = definitions[0].config.inputSchema as z.ZodType<unknown>;
+      const rawField = 'password';
+
+      expect(() => {
+        analyzeSchema.parse({
+          connection: {
+            host: 'db.internal',
+            port: 22,
+            username: 'ops',
+            [rawField]: 'sample'
+          },
+          duration_minutes: 1,
+          include_processes: true,
+          include_network: true
+        });
+      }).toThrow();
+    }
+  );
   it('uses sampled collection for analyze_server and single snapshots for the other collectors', async () => {
     const collectSampled = jest.fn(async () => baseSnapshot);
     const collectSingle = jest.fn(async () => baseSnapshot);
