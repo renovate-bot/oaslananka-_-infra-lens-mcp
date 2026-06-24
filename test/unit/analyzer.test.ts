@@ -8,7 +8,7 @@ import { saveSnapshot } from '../../src/baseline.js';
 import { closeAllDatabases } from '../../src/db.js';
 import { DEFAULT_THRESHOLDS, type Anomaly, type MetricSnapshot } from '../../src/types.js';
 
-const TEST_ROOT = mkdtempSync(join(tmpdir(), 'mcp-infra-lens-analyzer-'));
+const TEST_ROOT = mkdtempSync(join(tmpdir(), 'infra-lens-mcp-analyzer-'));
 
 const makeSnapshot = (overrides: Partial<MetricSnapshot> = {}): MetricSnapshot => ({
   timestamp: Date.now(),

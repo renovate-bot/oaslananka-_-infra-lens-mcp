@@ -1,8 +1,8 @@
-**mcp-infra-lens v1.0.6**
+**infra-lens-mcp v1.0.6**
 
 ***
 
-# mcp-infra-lens v1.0.6
+# infra-lens-mcp v1.0.6
 
 ## Interfaces
 

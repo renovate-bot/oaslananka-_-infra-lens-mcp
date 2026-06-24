@@ -111,6 +111,7 @@ function inferState({ hasReleasePr, tagExists, releaseExists, npmExists }) {
 const packageJson = readJson('package.json');
 const serverJson = readJson('server.json');
 const version = packageJson.version;
+const reservedFailedVersions = new Set(['1.0.3', '1.0.4', '1.0.5', '1.0.6']);
 const tagName = `${packageJson.name}-v${version}`;
 const repository = resolveGitHubRepository(packageJson.repository?.url ?? packageJson.repository);
 const tagResult = run('git', ['tag', '--list', tagName]);
@@ -132,6 +133,12 @@ const blockers = [];
 
 if (packageJson.version !== serverJson.version || serverJson.packages?.[0]?.version !== version) {
   blockers.push('version metadata drift');
+}
+
+if (reservedFailedVersions.has(version)) {
+  blockers.push(
+    `version ${version} is reserved by earlier failed package publication attempts; wait for release-please to choose a newer patch version`
+  );
 }
 
 if (npmExists) {

@@ -1,4 +1,4 @@
-# mcp-infra-lens
+# infra-lens-mcp
 
 <p align="center">
   <a href="https://www.buymeacoffee.com/oaslananka">
@@ -8,17 +8,17 @@
 
 Explain Linux incidents over SSH with baseline-aware MCP tooling.
 
-[![npm version](https://img.shields.io/npm/v/mcp-infra-lens.svg)](https://www.npmjs.com/package/mcp-infra-lens)
-[![npm downloads](https://img.shields.io/npm/dm/mcp-infra-lens.svg)](https://www.npmjs.com/package/mcp-infra-lens)
+[![npm version](https://img.shields.io/npm/v/infra-lens-mcp.svg)](https://www.npmjs.com/package/infra-lens-mcp)
+[![npm downloads](https://img.shields.io/npm/dm/infra-lens-mcp.svg)](https://www.npmjs.com/package/infra-lens-mcp)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Node 24 LTS](https://img.shields.io/badge/node-24%20LTS-339933.svg)](https://nodejs.org/)
 [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.29.0-6f42c1.svg)](https://www.npmjs.com/package/@modelcontextprotocol/sdk)
 
-`mcp-infra-lens` is a TypeScript MCP server that connects to Linux hosts over SSH, captures live metrics, stores local SQLite history, compares snapshots to baselines, and returns plain-English infrastructure explanations.
+`infra-lens-mcp` is a TypeScript MCP server that connects to Linux hosts over SSH, captures live metrics, stores local SQLite history, compares snapshots to baselines, and returns plain-English infrastructure explanations.
 
 ## Demo
 
-![mcp-infra-lens demo](docs/demo.gif)
+![infra-lens-mcp demo](docs/demo.gif)
 
 ## Tools
 
@@ -43,7 +43,7 @@ Explain Linux incidents over SSH with baseline-aware MCP tooling.
 Run the stdio MCP server from npm:
 
 ```bash
-npx -y mcp-infra-lens
+npx -y infra-lens-mcp
 ```
 
 Desktop MCP client style configuration:
@@ -53,9 +53,9 @@ Desktop MCP client style configuration:
   "mcpServers": {
     "infra-lens": {
       "command": "npx",
-      "args": ["-y", "mcp-infra-lens"],
+      "args": ["-y", "infra-lens-mcp"],
       "env": {
-        "INFRA_LENS_DB": "/Users/you/.mcp-infra-lens/metrics.db"
+        "INFRA_LENS_DB": "/Users/you/.infra-lens-mcp/metrics.db"
       }
     }
   }
@@ -77,7 +77,7 @@ node dist/mcp.js
 | Variable | Default | Description |
 | --- | --- | --- |
 | `MCP_TRANSPORT` | `stdio` | Intended transport mode: `stdio` or `http` |
-| `INFRA_LENS_DB` | `~/.mcp-infra-lens/metrics.db` | SQLite database path |
+| `INFRA_LENS_DB` | `~/.infra-lens-mcp/metrics.db` | SQLite database path |
 | `MCP_HTTP_HOST` | `127.0.0.1` | HTTP bind host. `HOST` remains a deprecated alias |
 | `MCP_HTTP_PORT` | `3000` | HTTP bind port. `PORT` remains a deprecated alias |
 | `MCP_HTTP_ALLOWED_ORIGINS` | unset | Comma-separated allowed Origin values |
@@ -127,10 +127,10 @@ OAuth validation is not implemented inside this package. Public deployments shou
 The Docker image defaults to stdio mode:
 
 ```bash
-docker build -t mcp-infra-lens .
+docker build -t infra-lens-mcp .
 docker run --rm -it \
-  -v "$HOME/.mcp-infra-lens:/home/appuser/.mcp-infra-lens" \
-  mcp-infra-lens
+  -v "$HOME/.infra-lens-mcp:/home/appuser/.infra-lens-mcp" \
+  infra-lens-mcp
 ```
 
 For local HTTP testing, override the command and keep the bind host on loopback unless a remote-safe profile and auth controls are configured:
@@ -143,7 +143,7 @@ docker run --rm -p 127.0.0.1:3000:3000 \
   -e MCP_HTTP_ALLOWED_HOSTS=localhost:3000 \
   -e MCP_HTTP_AUTH_MODE=bearer \
   -e MCP_HTTP_BEARER_TOKEN=local-dev-token \
-  mcp-infra-lens node dist/server-http.js
+  infra-lens-mcp node dist/server-http.js
 ```
 
 ## Development
@@ -158,12 +158,16 @@ pnpm run check:metadata
 pnpm run package:dry-run
 ```
 
-Docker-backed SSH e2e validation:
+Docker-backed SSH e2e validation uses a self-contained fixture lifecycle:
 
 ```bash
-docker compose -f docker-compose.test.yml up -d --build
 pnpm run test:e2e
-docker compose -f docker-compose.test.yml down --volumes
+```
+
+If a fixture is already running and you intentionally want to skip lifecycle management, use:
+
+```bash
+INFRA_LENS_E2E_SKIP_FIXTURE=1 pnpm run test:e2e:raw
 ```
 
 Generated API docs live in [docs/api](./docs/api/README.md).

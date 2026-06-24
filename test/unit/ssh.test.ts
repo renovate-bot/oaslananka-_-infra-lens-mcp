@@ -129,7 +129,7 @@ describe('ssh helpers', () => {
   });
 
   it('expands tilde in known_hosts paths', () => {
-    const tempHome = mkdtempSync(path.join(os.tmpdir(), 'mcp-infra-lens-home-'));
+    const tempHome = mkdtempSync(path.join(os.tmpdir(), 'infra-lens-mcp-home-'));
     const homeSpy = jest.spyOn(os, 'homedir').mockReturnValue(tempHome);
     const knownHostsDir = path.join(tempHome, '.ssh');
     const key = Buffer.from('test-host-key');

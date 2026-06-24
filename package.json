@@ -1,8 +1,8 @@
 {
-  "name": "mcp-infra-lens",
+  "name": "infra-lens-mcp",
   "version": "1.0.6",
   "packageManager": "pnpm@11.3.0",
-  "mcpName": "io.github.oaslananka/mcp-infra-lens",
+  "mcpName": "io.github.oaslananka/infra-lens-mcp",
   "description": "MCP server that connects to Linux servers over SSH, collects live metrics, builds statistical baselines, detects anomalies with z-score analysis, and explains infrastructure health in plain English",
   "homepage": "https://github.com/oaslananka/infra-lens-mcp",
   "repository": {
@@ -25,6 +25,7 @@
     }
   },
   "bin": {
+    "infra-lens-mcp": "dist/mcp.js",
     "mcp-infra-lens": "dist/mcp.js"
   },
   "files": [
@@ -119,5 +120,9 @@
     "typedoc": "0.28.19",
     "typedoc-plugin-markdown": "4.11.0",
     "typescript": "6.0.3"
+  },
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/oaslananka"
   }
 }

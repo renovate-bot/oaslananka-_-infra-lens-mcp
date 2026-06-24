@@ -28,8 +28,8 @@ const packageRepository = normalizeUrl(packageJson.repository?.url ?? packageJso
 const mcpRepository = normalizeUrl(mcpJson.repository);
 const serverRepository = normalizeUrl(serverJson.repository?.url);
 
-if (packageJson.name !== 'mcp-infra-lens') {
-  fail('package.json name must be mcp-infra-lens.');
+if (packageJson.name !== 'infra-lens-mcp') {
+  fail('package.json name must be infra-lens-mcp.');
 }
 
 if (packageJson.mcpName !== serverJson.name) {
@@ -104,6 +104,12 @@ if (failures.length > 0) {
   process.exit(1);
 }
 
+const connectorPublishReady = mcpJson.connector_readiness?.publishReady ?? false;
+const connectorPublishBlocker = connectorPublishReady
+  ? null
+  : (mcpJson.connector_readiness?.reason ??
+    'Connector publication is intentionally blocked until its external production requirements are met.');
+
 console.log(
   JSON.stringify(
     {
@@ -112,7 +118,10 @@ console.log(
       version: packageJson.version,
       mcpName: packageJson.mcpName,
       transports: [...transports],
-      publishReady: mcpJson.connector_readiness?.publishReady ?? false
+      packageReady: true,
+      connectorPublishReady,
+      publishReady: connectorPublishReady,
+      publishBlocker: connectorPublishBlocker
     },
     null,
     2

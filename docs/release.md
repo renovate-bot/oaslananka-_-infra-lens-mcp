@@ -2,14 +2,25 @@
 
 ## Model
 
-`mcp-infra-lens` uses release-please manifest mode:
+`infra-lens-mcp` uses release-please manifest mode:
 
 - `release-please-config.json`
 - `.release-please-manifest.json`
 - `.github/workflows/release.yml`
 
 Version numbers come from Conventional Commits, SemVer, release-please, and the manifest. Do not create manual tags, manual GitHub Releases, or manual changelog release entries.
-Release tags use the release-please component format `mcp-infra-lens-vX.Y.Z`.
+Release tags use the release-please component format `infra-lens-mcp-vX.Y.Z`.
+
+
+## Package identity
+
+The canonical npm package name is `infra-lens-mcp`. The old `mcp-infra-lens` name is retained only as a binary alias in `package.json` so existing local command snippets can fail less abruptly while the public npm package identity moves to the repository-aligned name.
+
+`pnpm run check:metadata` separates package artifact readiness from public connector publication readiness:
+
+- `packageReady: true` means the npm package metadata, package manifest, MCP manifest, server manifest, required packaged files, and optional built `dist` files are internally consistent.
+- `connectorPublishReady: false` is intentional while remote HTTP publication still requires production OAuth/HTTPS gateway configuration outside this package.
+- A false connector readiness value must include `publishBlocker`/`connector_readiness.reason` so releases are blocked for an explicit reason rather than ambiguous metadata drift.
 
 ## Publishing
 
@@ -39,7 +50,7 @@ The package `repository.url` must exactly match this GitHub repository for npm T
 
 ## Manual setup
 
-Configure npm Trusted Publishing for package `mcp-infra-lens` with:
+Configure npm Trusted Publishing for package `infra-lens-mcp` with:
 
 - owner/repo: `oaslananka/infra-lens-mcp`
 - workflow filename: `release.yml`

@@ -1,4 +1,4 @@
-# Contributing to mcp-infra-lens
+# Contributing to infra-lens-mcp
 
 ## Development setup
 

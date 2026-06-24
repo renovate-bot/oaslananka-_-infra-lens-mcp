@@ -2,7 +2,7 @@
 
 ## Maintainer model
 
-`mcp-infra-lens` is currently maintained by the repository owner. The project prefers small, reviewable pull requests and requires the protected `main` checks before merge.
+`infra-lens-mcp` is currently maintained by the repository owner. The project prefers small, reviewable pull requests and requires the protected `main` checks before merge.
 
 ## Support channels
 

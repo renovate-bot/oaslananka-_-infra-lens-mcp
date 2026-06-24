@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible problem in mcp-infra-lens
+about: Report a reproducible problem in infra-lens-mcp
 title: "bug: "
 labels: type:bug, priority:P2, risk:medium
 assignees: ""

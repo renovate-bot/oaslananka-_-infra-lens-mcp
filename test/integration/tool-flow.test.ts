@@ -22,7 +22,7 @@ import { closeAllDatabases } from '../../src/db.js';
 import { createToolDefinitions } from '../../src/server-core.js';
 import type { MetricSnapshot } from '../../src/types.js';
 
-const TEST_ROOT = join(tmpdir(), 'mcp-infra-lens-integration-tests');
+const TEST_ROOT = join(tmpdir(), 'infra-lens-mcp-integration-tests');
 const connection = { host: 'app-01.internal', port: 22, username: 'ops' };
 
 function parsePayload<T>(result: { content: Array<{ text: string }> }): T {

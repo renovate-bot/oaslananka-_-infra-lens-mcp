@@ -72,8 +72,8 @@ jobs:
         env:
           VERSION: ${{ needs.release-please.outputs.version }}
         run: |
-          if npm view "mcp-infra-lens@${VERSION}" version >/dev/null 2>&1; then
-            echo "mcp-infra-lens@${VERSION} already exists on npm" >&2
+          if npm view "infra-lens-mcp@${VERSION}" version >/dev/null 2>&1; then
+            echo "infra-lens-mcp@${VERSION} already exists on npm" >&2
             exit 1
           fi
 
@@ -97,12 +97,12 @@ jobs:
           echo "tarball=${TARBALL}" >> "$GITHUB_OUTPUT"
 
       - name: Generate SBOM
-        run: node scripts/generate-sbom.mjs "mcp-infra-lens-${{ needs.release-please.outputs.version }}.cdx.json"
+        run: node scripts/generate-sbom.mjs "infra-lens-mcp-${{ needs.release-please.outputs.version }}.cdx.json"
 
       - name: Generate SHA256 checksum
         env:
           TARBALL: ${{ steps.pack.outputs.tarball }}
-        run: sha256sum "$TARBALL" "mcp-infra-lens-${{ needs.release-please.outputs.version }}.cdx.json" > "mcp-infra-lens-${{ needs.release-please.outputs.version }}.sha256"
+        run: sha256sum "$TARBALL" "infra-lens-mcp-${{ needs.release-please.outputs.version }}.cdx.json" > "infra-lens-mcp-${{ needs.release-please.outputs.version }}.sha256"
 
       - name: Attest package artifact
         uses: actions/attest-build-provenance@43d14bc2b83dec42d39ecae14e916627a18bb661
@@ -115,7 +115,7 @@ jobs:
           TARBALL: ${{ steps.pack.outputs.tarball }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
           VERSION: ${{ needs.release-please.outputs.version }}
-        run: gh release upload "$TAG_NAME" "$TARBALL" "mcp-infra-lens-${VERSION}.cdx.json" "mcp-infra-lens-${VERSION}.sha256"
+        run: gh release upload "$TAG_NAME" "$TARBALL" "infra-lens-mcp-${VERSION}.cdx.json" "infra-lens-mcp-${VERSION}.sha256"
 
       - name: Publish with npm trusted publishing
         env:
@@ -129,5 +129,5 @@ jobs:
           TMPDIR="$(mktemp -d)"
           cd "$TMPDIR"
           npm init -y >/dev/null
-          npm install "mcp-infra-lens@${VERSION}"
-          node -e 'import("mcp-infra-lens").then(() => console.log("import ok"))'
+          npm install "infra-lens-mcp@${VERSION}"
+          node -e 'import("infra-lens-mcp").then(() => console.log("import ok"))'

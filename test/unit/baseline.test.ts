@@ -7,7 +7,7 @@ import { getBaseline, getHistory, saveSnapshot } from '../../src/baseline.js';
 import { closeAllDatabases } from '../../src/db.js';
 import type { MetricSnapshot } from '../../src/types.js';
 
-const TEST_ROOT = mkdtempSync(join(tmpdir(), 'mcp-infra-lens-baseline-'));
+const TEST_ROOT = mkdtempSync(join(tmpdir(), 'infra-lens-mcp-baseline-'));
 
 const makeSnapshot = (timestamp: number, host = 'baseline-host'): MetricSnapshot => ({
   timestamp,

@@ -5,7 +5,7 @@ coverage
 .github
 .azure
 .agent
-.mcp-infra-lens
+.infra-lens-mcp
 *.log
 *.tgz
 .env

@@ -8,7 +8,7 @@ assignees: ""
 
 Please do not submit security vulnerabilities in a public issue.
 
-Email **oaslananka@gmail.com** with subject **`[SECURITY] mcp-infra-lens`** and include:
+Email **oaslananka@gmail.com** with subject **`[SECURITY] infra-lens-mcp`** and include:
 
 - Affected version
 - Reproduction steps

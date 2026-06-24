@@ -19,7 +19,7 @@ import { getBaseline, getHistory, saveSnapshot } from '../../src/baseline.js';
 import { closeAllDatabases } from '../../src/db.js';
 import { createToolDefinitions } from '../../src/server-core.js';
 
-const TEST_ROOT = join(tmpdir(), 'mcp-infra-lens-e2e-tests');
+const TEST_ROOT = join(tmpdir(), 'infra-lens-mcp-e2e-tests');
 const connection = {
   host: '127.0.0.1',
   port: 2222,

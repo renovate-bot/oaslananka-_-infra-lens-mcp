@@ -6,7 +6,7 @@
 
 ## Context
 
-`mcp-infra-lens` is primarily a local MCP server that can be launched by desktop MCP clients with `npx -y mcp-infra-lens`. It also exposes a Streamable HTTP entry point for controlled deployments and integration testing. The transport choice affects protocol safety, logging, deployment hardening, and what credentials can be accepted.
+`infra-lens-mcp` is primarily a local MCP server that can be launched by desktop MCP clients with `npx -y infra-lens-mcp`. It also exposes a Streamable HTTP entry point for controlled deployments and integration testing. The transport choice affects protocol safety, logging, deployment hardening, and what credentials can be accepted.
 
 ## Decision
 

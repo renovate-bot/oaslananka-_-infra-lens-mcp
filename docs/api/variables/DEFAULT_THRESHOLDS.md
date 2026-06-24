@@ -1,8 +1,8 @@
-[**mcp-infra-lens v1.0.6**](../README.md)
+[**infra-lens-mcp v1.0.6**](../README.md)
 
 ***
 
-[mcp-infra-lens](../README.md) / DEFAULT\_THRESHOLDS
+[infra-lens-mcp](../README.md) / DEFAULT\_THRESHOLDS
 
 # Variable: DEFAULT\_THRESHOLDS
 

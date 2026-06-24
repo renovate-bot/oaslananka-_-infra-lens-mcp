@@ -9,7 +9,7 @@ import { getPackageVersion } from './version.js';
 export async function createStdioServer(): Promise<McpServer> {
   const server = new McpServer(
     {
-      name: 'mcp-infra-lens',
+      name: 'infra-lens-mcp',
       version: getPackageVersion()
     },
     {

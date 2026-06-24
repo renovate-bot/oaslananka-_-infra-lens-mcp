@@ -3,7 +3,7 @@
   "release-type": "node",
   "packages": {
     ".": {
-      "package-name": "mcp-infra-lens",
+      "package-name": "infra-lens-mcp",
       "changelog-path": "CHANGELOG.md",
       "extra-files": [
         {

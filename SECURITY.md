@@ -2,13 +2,13 @@
 
 ## Supported versions
 
-Security fixes target the latest published `mcp-infra-lens` release and the default branch. The package supports Node.js 22 and newer, with Node.js 24 LTS used for CI, Docker, and release automation.
+Security fixes target the latest published `infra-lens-mcp` release and the default branch. The package supports Node.js 22 and newer, with Node.js 24 LTS used for CI, Docker, and release automation.
 
 ## Reporting a vulnerability
 
 Please do not open a public issue for vulnerabilities.
 
-Email **oaslananka@gmail.com** with subject **`[SECURITY] mcp-infra-lens`**. Do not include live secrets, private keys, bearer tokens, registry tokens, or production credentials in the report. A response is expected within 72 hours.
+Email **oaslananka@gmail.com** with subject **`[SECURITY] infra-lens-mcp`**. Do not include live secrets, private keys, bearer tokens, registry tokens, or production credentials in the report. A response is expected within 72 hours.
 
 ## Security scope
 
@@ -21,7 +21,7 @@ Email **oaslananka@gmail.com** with subject **`[SECURITY] mcp-infra-lens`**. Do 
 
 ## Threat model summary
 
-`mcp-infra-lens` connects to remote Linux hosts and collects operational telemetry. Treat it as security-sensitive automation.
+`infra-lens-mcp` connects to remote Linux hosts and collects operational telemetry. Treat it as security-sensitive automation.
 
 - SSH host key verification is strict by default and uses `known_hosts` or pinned SHA256 host keys.
 - SSH credentials are held in memory only for the active connection and are never written to SQLite.

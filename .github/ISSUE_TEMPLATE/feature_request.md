@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an improvement to mcp-infra-lens
+about: Suggest an improvement to infra-lens-mcp
 title: "feat: "
 labels: type:enhancement, priority:P3, risk:low
 assignees: ""

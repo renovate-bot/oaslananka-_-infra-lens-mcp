@@ -23,7 +23,7 @@ const logger = createLogger('server-http');
 async function createHttpTransport() {
   const server = new McpServer(
     {
-      name: 'mcp-infra-lens',
+      name: 'infra-lens-mcp',
       version: getPackageVersion()
     },
     {
@@ -111,7 +111,7 @@ const httpServer = createServer((request, response) => {
 
 httpServer.listen(httpConfig.port, httpConfig.host, () => {
   logger.info(
-    `mcp-infra-lens HTTP transport listening on http://${httpConfig.host}:${httpConfig.port}`
+    `infra-lens-mcp HTTP transport listening on http://${httpConfig.host}:${httpConfig.port}`
   );
 });
 

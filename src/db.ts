@@ -4,7 +4,7 @@ import path, { dirname } from 'node:path';
 
 import Database from 'better-sqlite3';
 
-const DEFAULT_DB_PATH = path.join(os.homedir(), '.mcp-infra-lens', 'metrics.db');
+const DEFAULT_DB_PATH = path.join(os.homedir(), '.infra-lens-mcp', 'metrics.db');
 
 const databaseCache = new Map<string, Database.Database>();
 

@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-This directory records accepted technical decisions that shape `mcp-infra-lens`.
+This directory records accepted technical decisions that shape `infra-lens-mcp`.
 
 ## Index
 

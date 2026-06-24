@@ -152,7 +152,7 @@ function wwwAuthenticateHeader(config: HttpConfig): string {
     ? `${config.resourceUrl.replace(/\/$/, '')}/.well-known/oauth-protected-resource`
     : '/.well-known/oauth-protected-resource';
 
-  return `Bearer realm="mcp-infra-lens", resource_metadata="${resourceMetadata}"`;
+  return `Bearer realm="infra-lens-mcp", resource_metadata="${resourceMetadata}"`;
 }
 
 export function authorizeHttpRequest(

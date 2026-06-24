@@ -168,10 +168,10 @@ jobs:
           persist-credentials: false
 
       - name: Build image
-        run: docker build -t mcp-infra-lens:ci .
+        run: docker build -t infra-lens-mcp:ci .
 
       - name: CLI smoke
-        run: docker run --rm --entrypoint node mcp-infra-lens:ci -e "import('better-sqlite3').then(() => console.log('runtime ok'))"
+        run: docker run --rm --entrypoint node infra-lens-mcp:ci -e "import('better-sqlite3').then(() => console.log('runtime ok'))"
 
   ssh-e2e:
     name: SSH E2E

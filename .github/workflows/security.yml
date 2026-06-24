@@ -84,12 +84,12 @@ jobs:
           persist-credentials: false
 
       - name: Build image
-        run: docker build -t mcp-infra-lens:security .
+        run: docker build -t infra-lens-mcp:security .
 
       - name: Container scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         with:
-          image-ref: mcp-infra-lens:security
+          image-ref: infra-lens-mcp:security
           severity: MEDIUM,HIGH,CRITICAL
           exit-code: '1'
           ignore-unfixed: true
