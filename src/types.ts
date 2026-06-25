@@ -134,7 +134,13 @@ export const AnomalySchema = z.object({
   value: z.number(),
   baseline_mean: z.number(),
   z_score: z.number().optional(),
+  robust_z_score: z.number().optional(),
+  baseline_median: z.number().optional(),
   normalized_load_per_core: z.number().optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  root_cause_hypothesis: z.string().optional(),
+  evidence: z.array(z.string()).optional(),
+  suggested_next_checks: z.array(z.string()).optional(),
   explanation: z.string(),
   recommendation: z.string()
 });
@@ -331,7 +337,13 @@ export interface Anomaly {
   value: number;
   baseline_mean: number;
   z_score?: number;
+  robust_z_score?: number;
+  baseline_median?: number;
   normalized_load_per_core?: number;
+  confidence?: number;
+  root_cause_hypothesis?: string;
+  evidence?: string[];
+  suggested_next_checks?: string[];
   explanation: string;
   recommendation: string;
 }

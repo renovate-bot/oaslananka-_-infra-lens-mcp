@@ -17,6 +17,75 @@ function selectTopMemoryProcess(processes: ProcessMetric[]): ProcessMetric | und
   return [...processes].sort((left, right) => right.mem_percent - left.mem_percent)[0];
 }
 
+function roundTo(value: number, places = 1): number {
+  const factor = 10 ** places;
+  return Math.round(value * factor) / factor;
+}
+
+function robustScore(samples: number[], value: number): { median: number; score: number } {
+  const median = ss.median(samples);
+  const mad = ss.median(samples.map((sample) => Math.abs(sample - median)));
+  const score = mad > 0 ? (0.6745 * (value - median)) / mad : value >= median + 20 ? 3 : 0;
+  return { median: roundTo(median), score: roundTo(score) };
+}
+
+function confidenceFor(severity: Anomaly['severity'], hasBaseline: boolean): number {
+  const base = severity === 'critical' ? 0.9 : severity === 'high' ? 0.82 : severity === 'medium' ? 0.7 : 0.58;
+  return roundTo(Math.min(0.98, base + (hasBaseline ? 0.05 : 0)), 2);
+}
+
+function enrich(
+  snapshot: MetricSnapshot,
+  anomaly: Anomaly,
+  hasBaseline: boolean,
+  extraEvidence: string[] = []
+): Anomaly {
+  const evidence = anomaly.evidence ?? [anomaly.explanation, ...extraEvidence];
+  return {
+    ...anomaly,
+    confidence: anomaly.confidence ?? confidenceFor(anomaly.severity, hasBaseline),
+    root_cause_hypothesis: anomaly.root_cause_hypothesis ?? inferRootCause(snapshot, anomaly.metric),
+    evidence,
+    suggested_next_checks: anomaly.suggested_next_checks ?? nextChecksFor(anomaly.metric)
+  };
+}
+
+function inferRootCause(snapshot: MetricSnapshot, metric: string): string {
+  const topCpu = selectTopCpuProcess(snapshot.processes);
+  const topMemory = selectTopMemoryProcess(snapshot.processes);
+  if (metric === 'cpu' && topCpu && topCpu.cpu_percent >= 40) {
+    return `${topCpu.command} is the most likely CPU pressure driver.`;
+  }
+  if (metric === 'memory' && topMemory) {
+    return `${topMemory.command} is the most likely memory pressure driver.`;
+  }
+  if (metric.startsWith('disk_inode:')) return 'Inode pressure is higher than byte pressure.';
+  if (metric.startsWith('disk:')) return 'The filesystem is approaching byte capacity.';
+  if (metric.startsWith('network:')) return 'Interface counters show packet quality loss.';
+  if (metric.startsWith('system:')) return 'Service or kernel signals may explain the incident.';
+  if (metric === 'load') return 'Load suggests runnable queue or IO wait pressure.';
+  return 'The signal deviates from the expected operating envelope.';
+}
+
+function nextChecksFor(metric: string): string[] {
+  if (metric === 'cpu') {
+    return ['Inspect the top CPU process.', 'Correlate with deploy or traffic windows.', 'Record a healthy baseline after recovery.'];
+  }
+  if (metric === 'memory') {
+    return ['Check process memory growth.', 'Review OOM and kernel logs.', 'Compare with baseline windows.'];
+  }
+  if (metric.startsWith('disk')) {
+    return ['Inspect large or high-file-count paths.', 'Check retention and cache paths.', 'Plan cleanup or capacity expansion.'];
+  }
+  if (metric.startsWith('network:')) {
+    return ['Compare NIC counters with upstream metrics.', 'Check MTU and interface resets.', 'Correlate with latency.'];
+  }
+  if (metric.startsWith('system:')) {
+    return ['Inspect service or kernel messages.', 'Correlate with restart times.', 'Check dependent services.'];
+  }
+  return ['Correlate with recent changes.', 'Compare against baseline windows.', 'Collect another snapshot.'];
+}
+
 export function analyzeSnapshot(
   snapshot: MetricSnapshot,
   baselineLabel = 'default',
@@ -38,6 +107,8 @@ export function analyzeSnapshot(
   if (baseline?.cpu_samples && baseline.cpu_samples.length >= 5) {
     const mean = ss.mean(baseline.cpu_samples);
     const stdDeviation = ss.standardDeviation(baseline.cpu_samples);
+    const robust = robustScore(baseline.cpu_samples, snapshot.cpu.usage_percent);
+    const recentMean = roundTo(ss.mean(baseline.cpu_samples.slice(0, Math.min(10, baseline.cpu_samples.length))));
     const zScore =
       stdDeviation > 0
         ? (snapshot.cpu.usage_percent - mean) / stdDeviation
@@ -47,23 +118,42 @@ export function analyzeSnapshot(
 
     if (
       Math.abs(zScore) > thresholds.zscore_threshold ||
+      Math.abs(robust.score) > thresholds.zscore_threshold ||
       snapshot.cpu.usage_percent > thresholds.cpu_warn_percent
     ) {
       const topProcess = selectTopCpuProcess(snapshot.processes);
+      const severity: Anomaly['severity'] =
+        snapshot.cpu.usage_percent >= thresholds.cpu_critical_percent
+          ? 'critical'
+          : snapshot.cpu.usage_percent > thresholds.cpu_warn_percent
+            ? 'high'
+            : 'medium';
       anomalies.push({
         metric: 'cpu',
-        severity:
-          snapshot.cpu.usage_percent >= thresholds.cpu_critical_percent
-            ? 'critical'
-            : snapshot.cpu.usage_percent > thresholds.cpu_warn_percent
-              ? 'high'
-              : 'medium',
+        severity,
         value: snapshot.cpu.usage_percent,
         baseline_mean: Number(mean.toFixed(1)),
+        baseline_median: robust.median,
         z_score: Number(zScore.toFixed(1)),
+        robust_z_score: robust.score,
+        confidence: confidenceFor(severity, true),
+        root_cause_hypothesis:
+          topProcess && topProcess.cpu_percent >= 40
+            ? `${topProcess.command} is the most likely CPU pressure driver.`
+            : 'CPU deviates from baseline and needs workload correlation.',
+        evidence: [
+          `CPU ${snapshot.cpu.usage_percent}% vs mean ${roundTo(mean)}%, median ${robust.median}%, recent ${recentMean}%.`,
+          `Standard z-score ${roundTo(zScore)} and robust z-score ${robust.score}.`,
+          `Top CPU process: ${topProcess?.command ?? 'unknown'} (${topProcess?.cpu_percent ?? 0}%).`
+        ],
+        suggested_next_checks: [
+          'Inspect the top CPU process.',
+          'Correlate with deploy or traffic windows.',
+          'Record a healthy baseline after recovery.'
+        ],
         explanation: `CPU is at ${snapshot.cpu.usage_percent}% (${zScore.toFixed(
           1
-        )}σ above baseline ${mean.toFixed(1)}%). Load is ${snapshot.cpu.load_1}/${snapshot.cpu.load_5}/${snapshot.cpu.load_15}. Top CPU consumer: ${topProcess?.command ?? 'unknown'} (${topProcess?.cpu_percent ?? 0}%).`,
+        )}σ above baseline ${mean.toFixed(1)}%, robust ${robust.score}σ from median ${robust.median}%). Load is ${snapshot.cpu.load_1}/${snapshot.cpu.load_5}/${snapshot.cpu.load_15}. Top CPU consumer: ${topProcess?.command ?? 'unknown'} (${topProcess?.cpu_percent ?? 0}%).`,
         recommendation:
           snapshot.cpu.usage_percent > 90
             ? `Investigate ${topProcess?.command ?? 'the top process'} (PID ${topProcess?.pid ?? 0}) and review application logs or scale-out options.`
@@ -72,11 +162,27 @@ export function analyzeSnapshot(
     }
   } else if (snapshot.cpu.usage_percent > thresholds.cpu_warn_percent) {
     const topProcess = selectTopCpuProcess(snapshot.processes);
+    const severity: Anomaly['severity'] =
+      snapshot.cpu.usage_percent >= thresholds.cpu_critical_percent ? 'critical' : 'high';
     anomalies.push({
       metric: 'cpu',
-      severity: snapshot.cpu.usage_percent >= thresholds.cpu_critical_percent ? 'critical' : 'high',
+      severity,
       value: snapshot.cpu.usage_percent,
       baseline_mean: 0,
+      confidence: confidenceFor(severity, false),
+      root_cause_hypothesis:
+        topProcess && topProcess.cpu_percent >= 40
+          ? `${topProcess.command} is the most likely CPU pressure driver, but baseline confidence is limited.`
+          : 'CPU is high without enough baseline samples to separate normal load from anomaly.',
+      evidence: [
+        `CPU ${snapshot.cpu.usage_percent}% exceeds warning threshold ${thresholds.cpu_warn_percent}%.`,
+        `Top process: ${topProcess?.command ?? 'unknown'}.`
+      ],
+      suggested_next_checks: [
+        'Record at least five healthy baseline samples.',
+        'Check top process logs and recent changes.',
+        'Confirm whether traffic or scheduled jobs explain the spike.'
+      ],
       explanation: `CPU is at ${snapshot.cpu.usage_percent}% with no baseline yet. Top process: ${topProcess?.command ?? 'unknown'}.`,
       recommendation:
         'Record more baseline samples with record_baseline before relying on z-score anomaly detection.'
@@ -115,7 +221,7 @@ export function analyzeSnapshot(
         severity:
           storageUsage >= thresholds.disk_critical_percent
             ? 'critical'
-            : disk.usage_percent >=
+            : storageUsage >=
                 thresholds.disk_warn_percent +
                   (thresholds.disk_critical_percent - thresholds.disk_warn_percent) / 2
               ? 'high'
@@ -205,19 +311,21 @@ export function analyzeSnapshot(
     });
   }
 
+  const enrichedAnomalies = anomalies.map((anomaly) => enrich(snapshot, anomaly, Boolean(baseline)));
+
   const health_score = Math.max(
     0,
     100 -
-      anomalies.filter((anomaly) => anomaly.severity === 'critical').length * 40 -
-      anomalies.filter((anomaly) => anomaly.severity === 'high').length * 20 -
-      anomalies.filter((anomaly) => anomaly.severity === 'medium').length * 10 -
-      anomalies.filter((anomaly) => anomaly.severity === 'low').length * 5
+      enrichedAnomalies.filter((anomaly) => anomaly.severity === 'critical').length * 40 -
+      enrichedAnomalies.filter((anomaly) => anomaly.severity === 'high').length * 20 -
+      enrichedAnomalies.filter((anomaly) => anomaly.severity === 'medium').length * 10 -
+      enrichedAnomalies.filter((anomaly) => anomaly.severity === 'low').length * 5
   );
 
   const summary =
-    anomalies.length === 0
+    enrichedAnomalies.length === 0
       ? `Server ${snapshot.host} looks healthy. CPU is ${snapshot.cpu.usage_percent}%, memory is ${snapshot.memory.usage_percent}%, disk usage is within expected thresholds, and system health signals are quiet.`
-      : `Found ${anomalies.length} anomaly${anomalies.length === 1 ? '' : 'ies'} on ${snapshot.host}. Most urgent signal: ${anomalies[0]?.explanation ?? 'n/a'}`;
+      : `Found ${enrichedAnomalies.length} anomaly${enrichedAnomalies.length === 1 ? '' : 'ies'} on ${snapshot.host}. Most urgent signal: ${enrichedAnomalies[0]?.explanation ?? 'n/a'}`;
 
-  return { anomalies, summary, health_score };
+  return { anomalies: enrichedAnomalies, summary, health_score };
 }
