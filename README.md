@@ -185,7 +185,7 @@ If a fixture is already running and you intentionally want to skip lifecycle man
 INFRA_LENS_E2E_SKIP_FIXTURE=1 pnpm run test:e2e:raw
 ```
 
-Generated API docs live in [docs/api](./docs/api/README.md).
+Generated API docs live in [docs/api](./docs/api/README.md). Client setup recipes live in [docs/integrations/client-setup.md](./docs/integrations/client-setup.md).
 
 See [docs/testing.md](./docs/testing.md), [docs/security.md](./docs/security.md), [docs/operations.md](./docs/operations.md), and [docs/release.md](./docs/release.md) for the full operational workflow.
 
