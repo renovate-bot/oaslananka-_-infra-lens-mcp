@@ -30,7 +30,8 @@ function robustScore(samples: number[], value: number): { median: number; score:
 }
 
 function confidenceFor(severity: Anomaly['severity'], hasBaseline: boolean): number {
-  const base = severity === 'critical' ? 0.9 : severity === 'high' ? 0.82 : severity === 'medium' ? 0.7 : 0.58;
+  const base =
+    severity === 'critical' ? 0.9 : severity === 'high' ? 0.82 : severity === 'medium' ? 0.7 : 0.58;
   return roundTo(Math.min(0.98, base + (hasBaseline ? 0.05 : 0)), 2);
 }
 
@@ -44,7 +45,8 @@ function enrich(
   return {
     ...anomaly,
     confidence: anomaly.confidence ?? confidenceFor(anomaly.severity, hasBaseline),
-    root_cause_hypothesis: anomaly.root_cause_hypothesis ?? inferRootCause(snapshot, anomaly.metric),
+    root_cause_hypothesis:
+      anomaly.root_cause_hypothesis ?? inferRootCause(snapshot, anomaly.metric),
     evidence,
     suggested_next_checks: anomaly.suggested_next_checks ?? nextChecksFor(anomaly.metric)
   };
@@ -69,21 +71,45 @@ function inferRootCause(snapshot: MetricSnapshot, metric: string): string {
 
 function nextChecksFor(metric: string): string[] {
   if (metric === 'cpu') {
-    return ['Inspect the top CPU process.', 'Correlate with deploy or traffic windows.', 'Record a healthy baseline after recovery.'];
+    return [
+      'Inspect the top CPU process.',
+      'Correlate with deploy or traffic windows.',
+      'Record a healthy baseline after recovery.'
+    ];
   }
   if (metric === 'memory') {
-    return ['Check process memory growth.', 'Review OOM and kernel logs.', 'Compare with baseline windows.'];
+    return [
+      'Check process memory growth.',
+      'Review OOM and kernel logs.',
+      'Compare with baseline windows.'
+    ];
   }
   if (metric.startsWith('disk')) {
-    return ['Inspect large or high-file-count paths.', 'Check retention and cache paths.', 'Plan cleanup or capacity expansion.'];
+    return [
+      'Inspect large or high-file-count paths.',
+      'Check retention and cache paths.',
+      'Plan cleanup or capacity expansion.'
+    ];
   }
   if (metric.startsWith('network:')) {
-    return ['Compare NIC counters with upstream metrics.', 'Check MTU and interface resets.', 'Correlate with latency.'];
+    return [
+      'Compare NIC counters with upstream metrics.',
+      'Check MTU and interface resets.',
+      'Correlate with latency.'
+    ];
   }
   if (metric.startsWith('system:')) {
-    return ['Inspect service or kernel messages.', 'Correlate with restart times.', 'Check dependent services.'];
+    return [
+      'Inspect service or kernel messages.',
+      'Correlate with restart times.',
+      'Check dependent services.'
+    ];
   }
-  return ['Correlate with recent changes.', 'Compare against baseline windows.', 'Collect another snapshot.'];
+  return [
+    'Correlate with recent changes.',
+    'Compare against baseline windows.',
+    'Collect another snapshot.'
+  ];
 }
 
 export function analyzeSnapshot(
@@ -108,7 +134,9 @@ export function analyzeSnapshot(
     const mean = ss.mean(baseline.cpu_samples);
     const stdDeviation = ss.standardDeviation(baseline.cpu_samples);
     const robust = robustScore(baseline.cpu_samples, snapshot.cpu.usage_percent);
-    const recentMean = roundTo(ss.mean(baseline.cpu_samples.slice(0, Math.min(10, baseline.cpu_samples.length))));
+    const recentMean = roundTo(
+      ss.mean(baseline.cpu_samples.slice(0, Math.min(10, baseline.cpu_samples.length)))
+    );
     const zScore =
       stdDeviation > 0
         ? (snapshot.cpu.usage_percent - mean) / stdDeviation
@@ -311,7 +339,9 @@ export function analyzeSnapshot(
     });
   }
 
-  const enrichedAnomalies = anomalies.map((anomaly) => enrich(snapshot, anomaly, Boolean(baseline)));
+  const enrichedAnomalies = anomalies.map((anomaly) =>
+    enrich(snapshot, anomaly, Boolean(baseline))
+  );
 
   const health_score = Math.max(
     0,
