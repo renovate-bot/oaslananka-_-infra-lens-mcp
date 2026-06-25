@@ -6,7 +6,7 @@
 
 # Interface: SystemMetric
 
-Defined in: [types.ts:277](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L277)
+Defined in: [types.ts:283](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L283)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:277](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **failed\_units**: `number`
 
-Defined in: [types.ts:278](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L278)
+Defined in: [types.ts:284](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L284)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [types.ts:278](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **kernel\_error\_events**: `number`
 
-Defined in: [types.ts:279](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L279)
+Defined in: [types.ts:285](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L285)

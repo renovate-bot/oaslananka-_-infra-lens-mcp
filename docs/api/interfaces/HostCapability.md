@@ -6,7 +6,7 @@
 
 # Interface: HostCapability
 
-Defined in: [types.ts:321](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L321)
+Defined in: [types.ts:327](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L327)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:321](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **name**: `string`
 
-Defined in: [types.ts:322](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L322)
+Defined in: [types.ts:328](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L328)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:322](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **available**: `boolean`
 
-Defined in: [types.ts:323](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L323)
+Defined in: [types.ts:329](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L329)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:323](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **source**: `string`
 
-Defined in: [types.ts:324](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L324)
+Defined in: [types.ts:330](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L330)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [types.ts:324](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > `optional` **detail?**: `string`
 
-Defined in: [types.ts:325](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L325)
+Defined in: [types.ts:331](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L331)

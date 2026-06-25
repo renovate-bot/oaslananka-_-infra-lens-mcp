@@ -6,7 +6,7 @@
 
 # Interface: Anomaly
 
-Defined in: [types.ts:328](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L328)
+Defined in: [types.ts:334](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L334)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [types.ts:328](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **metric**: `string`
 
-Defined in: [types.ts:329](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L329)
+Defined in: [types.ts:335](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L335)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [types.ts:329](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **severity**: `"low"` \| `"medium"` \| `"high"` \| `"critical"`
 
-Defined in: [types.ts:330](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L330)
+Defined in: [types.ts:336](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L336)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [types.ts:330](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **value**: `number`
 
-Defined in: [types.ts:331](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L331)
+Defined in: [types.ts:337](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L337)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [types.ts:331](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **baseline\_mean**: `number`
 
-Defined in: [types.ts:332](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L332)
+Defined in: [types.ts:338](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L338)
 
 ***
 
@@ -46,7 +46,23 @@ Defined in: [types.ts:332](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > `optional` **z\_score?**: `number`
 
-Defined in: [types.ts:333](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L333)
+Defined in: [types.ts:339](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L339)
+
+***
+
+### robust\_z\_score?
+
+> `optional` **robust\_z\_score?**: `number`
+
+Defined in: [types.ts:340](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L340)
+
+***
+
+### baseline\_median?
+
+> `optional` **baseline\_median?**: `number`
+
+Defined in: [types.ts:341](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L341)
 
 ***
 
@@ -54,7 +70,39 @@ Defined in: [types.ts:333](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > `optional` **normalized\_load\_per\_core?**: `number`
 
-Defined in: [types.ts:334](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L334)
+Defined in: [types.ts:342](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L342)
+
+***
+
+### confidence?
+
+> `optional` **confidence?**: `number`
+
+Defined in: [types.ts:343](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L343)
+
+***
+
+### root\_cause\_hypothesis?
+
+> `optional` **root\_cause\_hypothesis?**: `string`
+
+Defined in: [types.ts:344](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L344)
+
+***
+
+### evidence?
+
+> `optional` **evidence?**: `string`[]
+
+Defined in: [types.ts:345](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L345)
+
+***
+
+### suggested\_next\_checks?
+
+> `optional` **suggested\_next\_checks?**: `string`[]
+
+Defined in: [types.ts:346](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L346)
 
 ***
 
@@ -62,7 +110,7 @@ Defined in: [types.ts:334](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **explanation**: `string`
 
-Defined in: [types.ts:335](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L335)
+Defined in: [types.ts:347](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L347)
 
 ***
 
@@ -70,4 +118,4 @@ Defined in: [types.ts:335](https://github.com/oaslananka/infra-lens-mcp/blob/mai
 
 > **recommendation**: `string`
 
-Defined in: [types.ts:336](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L336)
+Defined in: [types.ts:348](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L348)

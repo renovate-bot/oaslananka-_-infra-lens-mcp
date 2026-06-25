@@ -8,7 +8,7 @@
 
 > **analyzeSnapshot**(`snapshot`, `baselineLabel?`, `thresholds?`): `object`
 
-Defined in: [analyzer.ts:20](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/analyzer.ts#L20)
+Defined in: [analyzer.ts:115](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/analyzer.ts#L115)
 
 ## Parameters
 

@@ -8,4 +8,4 @@
 
 > **GetHistoryInput** = `z.infer`\<*typeof* [`GetHistorySchema`](../variables/GetHistorySchema.md)\>
 
-Defined in: [types.ts:220](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L220)
+Defined in: [types.ts:226](https://github.com/oaslananka/infra-lens-mcp/blob/main/src/types.ts#L226)
